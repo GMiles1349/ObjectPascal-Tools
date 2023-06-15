@@ -84,9 +84,11 @@ Adds a number of useable elements to the end of the array equal to the length of
 
 **`FindDeleteAll(const Value: T)`**<br>
 
-**`FindFirst(const Value: T): INT32`**<br>
+## Functions
 
-**`FindLast(const Value: T): INT32`**<br>
+**`FindFirst(const Value: T):`** ***INT32***<br>
+
+**`FindLast(const Value: T):`** ***INT32***<br>
 
 **`FindAll(const Value: T): TArray<UINT32>`**<br> 
 
