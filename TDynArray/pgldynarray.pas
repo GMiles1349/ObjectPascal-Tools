@@ -21,7 +21,7 @@ type
     	fMemReserved: UINT32;
     	fElements: array of T;
 
-    	function GetElement(const Index: UINT32): T;
+    	function GetElement(Index: UINT32): T;
       function GetData(): Pointer;
       function GetEmpty(): Boolean;
 
@@ -67,12 +67,15 @@ type
       procedure CopyToDynArray(var aDynArr: TDynArray);
       procedure Combine(var aDynArr: TDynArray); overload;
       procedure Combine(var Arr: specialize TArray<T>); overload;
+      procedure OverWrite(var aDynArr: TDynArray; aIndex: UINT32); overload;
+      procedure OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32); overload;
 
       function FindFirst(const Value: T): INT32;
       function FindLast(const Value: T): INT32;
       function FindAll(const Value: T): specialize TArray<UINT32>;
 
       class operator Initialize(var Dest: TDynArray);
+      class operator = (Arr1,Arr2: TDynArray): Boolean;
 
   end;
 
@@ -87,6 +90,12 @@ class operator TDynArray.Initialize(var Dest: TDynArray);
     Dest.fMemUsed := 0;
     Dest.fMemReserved := 0;
     Initialize(Dest.fElements);
+  end;
+
+
+class operator TDynArray.= (Arr1,Arr2: TDynArray): Boolean;
+  begin
+
   end;
 
 
@@ -117,7 +126,7 @@ I: Cardinal;
   end;
 
 
-function TDynArray.GetElement(const Index: UINT32): T;
+function TDynArray.GetElement(Index: UINT32): T;
 	begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
     if Index > fHigh then begin
@@ -476,6 +485,28 @@ Len: UINT32;
     Place := Self.fSize;
     Self.Resize(Self.fSize + Len);
     Move(Arr[0], Self.fElements[Place], Len * Self.fTypeSize);
+  end;
+
+
+procedure TDynArray.OverWrite(var aDynArr: TDynArray; aIndex: UINT32);
+var
+NewSize: UINT32;
+  begin
+    NewSize := (aIndex - 1) + aDynArr.Size;
+    if NewSize > Self.fSize then Self.UpdateLength(NewSize);
+    Move(aDynArr.fElements[0], Self.fElements[aIndex], aDynArr.fMemUsed);
+  end;
+
+
+procedure TDynArray.OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32);
+var
+NewSize: UINT32;
+Len: UINT32;
+  begin
+    Len := Length(Arr);
+    NewSize := (aIndex - 1) + Len;
+    if NewSize > Self.fSize then Self.UpdateLength(NewSize);
+    Move(Arr[0], Self.fElements[aIndex], Len * Self.fTypeSize);
   end;
 
 
