@@ -30,14 +30,17 @@ The total amount of memory in bytes reserved for the array.
 **`Empty: Boolean`** *READ ONLY*<br>
 Returns `TRUE` if `SIZE` is 0.
 
-#### Constructors
+##
+## Constructors
+
 **`Create(const aNumElements: UINT32)`**<br>
 Creates a TDynArray with aNumElements useable elements. Allocated memory is twice the size needed to store the elements.
 
 **`Create(const aNumElements: UINT32; const aDefaultValue: T)`**<br>
 Creates a TDynArray with aNumElements useable elements initialized to aDefualtValue. Allocated memory is twice the size needed to store the elements.
 
-#### Procedures
+##
+## Procedures
 
 **`Resize(const aLength: UINT32)`**<br>
 Adjusts the number of useable elements to aLength. If `aLength` is <= the current `Size`, no memory operations are made. If `aLength` is > `Size`, memory is reallocated as twice the amount needed to store the elements.
@@ -84,6 +87,7 @@ Adds a number of useable elements to the end of the array equal to the length of
 
 **`FindDeleteAll(const Value: T)`**<br>
 
+##
 ## Functions
 
 **`FindFirst(const Value: T):`** ***INT32***<br>
