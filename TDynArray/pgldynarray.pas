@@ -2,7 +2,7 @@ unit PGLDynArray;
 
 {$mode ObjFPC}{$H+}
 {$modeswitch ADVANCEDRECORDS}
-//{$INCLUDE pgldynarray.Inc}
+{$INCLUDE pgldynarray.inc}
 
 interface
 
@@ -65,12 +65,12 @@ type
       procedure CopyToBuffer(var aBuffer: Pointer);
       procedure CopyToArray(var Arr: specialize TArray<T>);
       procedure CopyToDynArray(var aDynArr: TDynArray);
-
+      procedure Combine(var aDynArr: TDynArray); overload;
+      procedure Combine(var Arr: specialize TArray<T>); overload;
 
       function FindFirst(const Value: T): INT32;
       function FindLast(const Value: T): INT32;
       function FindAll(const Value: T): specialize TArray<UINT32>;
-
 
       class operator Initialize(var Dest: TDynArray);
 
@@ -454,6 +454,28 @@ procedure TDynArray.CopyToDynArray(var aDynArr: TDynArray);
   	aDynArr.Resize(Self.Size);
     aDynArr.ShrinkToSize();
     Move(Self.fElements[0], aDynArr.fElements[0], Self.fMemUsed);
+  end;
+
+
+procedure TDynArray.Combine(var aDynArr: TDynArray);
+var
+Place: UINT32;
+  begin
+    Place := Self.fSize;
+    Self.Resize(Self.fSize + aDynArr.fSize);
+    Move(aDynArr.fElements[0], Self.fElements[Place], aDynArr.fMemUsed);
+  end;
+
+
+procedure TDynArray.Combine(var Arr: specialize TArray<T>);
+var
+Place: UINT32;
+Len: UINT32;
+  begin
+    Len := Length(Arr);
+    Place := Self.fSize;
+    Self.Resize(Self.fSize + Len);
+    Move(Arr[0], Self.fElements[Place], Len * Self.fTypeSize);
   end;
 
 
