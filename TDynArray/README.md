@@ -90,5 +90,5 @@ Adds a number of useable elements to the end of the array equal to the length of
 
 **`FindLast(const Value: T):`** ***INT32***<br>
 
-**`FindAll(const Value: T): TArray<UINT32>`**<br> 
+**`FindAll(const Value: T):`** ***TArray<UINT32>***<br> 
 
