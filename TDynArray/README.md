@@ -34,7 +34,7 @@ Returns `TRUE` if `SIZE` is 0.
 **`Create(const aNumElements: UINT32)`**<br>
 Creates a TDynArray with aNumElements useable elements. Allocated memory is twice the size needed to store the elements.
 
-**`Create(const aNumElements: UINT32`**<br> const aDefaultValue: T)`**<br>
+**`Create(const aNumElements: UINT32; const aDefaultValue: T)`**<br>
 Creates a TDynArray with aNumElements useable elements initialized to aDefualtValue. Allocated memory is twice the size needed to store the elements.
 
 #### Procedures
@@ -49,7 +49,7 @@ Removes `aCount` useable elements from the end of the array. If `aCount` is 1, t
 Removes `aCount` useable elements from the beginning of the array. If `aCount` is 1, the effect is the same as calling `PopFont`. If `aCount` is > `Size` the number of useable elements is set to 0. 
 
 **`TrimRange(const aStartIndex, aEndIndex: UINT32)`**<br>
-Removes removes useable elements from the array in the range of `aStartIndex` to `aEndIndex` inclusive. If size of the range is 1, the effect is the same as calling `Delete(aStartIndex)`.<br>
+Removes useable elements from the array in the range of `aStartIndex` to `aEndIndex` inclusive. If size of the range is 1, the effect is the same as calling `Delete(aStartIndex)`.<br>
 If `aStartIndex` is > `High`, `TrimRange` has no effect.<br>
 if `aEndIndex` is > `High` its value is set to the value of `High`.
 
@@ -61,8 +61,10 @@ Changes the amount of reserved memory to `aLength * TypeSize` bytes, effectively
 If `aLength` is <= `Size` then no operations are performed.
 
 **`PushBack(const Value: T)`**<br>
+Adds 1 useable element with a value of `Value` to the end of the array and increments `Size` by 1. If the new value of `Size` would excede `MaxSize`, then memory is reallocated at twice the size needed to store the useable elements.
 
 **`PushBack(const Values: Array of T)`**<br>
+Adds a number of useable elements to the end of the array equal to the length of `Values` and increments `Size` by the same amount. If the new value of `Size` would excede `MaxSize`, then memory is reallocated at twice the size needed to store the useable elements.
 
 **`PushFront(const Value: T)`**<br>
 
