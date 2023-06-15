@@ -339,9 +339,7 @@ procedure TDynArray.Delete(const Index: UINT32);
 var
 MoveSize: UINT32;
 	begin
-    {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
     if Self.fSize = 0 then Exit;
-    {$ENDIF}
 
     MoveSize := (Self.fSize - Index) * Self.fTypeSize;
     Move(Self.fElements[Index + 1], Self.fElements[Index], MoveSize);
