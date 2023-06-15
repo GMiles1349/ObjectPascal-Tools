@@ -421,15 +421,14 @@ Temp: T;
 
 procedure TDynArray.Reverse();
 var
-I,R: UINT32;
+I: UINT32;
 Limit: UINT32;
   begin
 
     Limit := Self.fHigh div 2;
-    R := Self.fHigh;
+
     for I := 0 to Limit do begin
-    	Self.Swap(I,R);
-      Dec(R);
+    	Self.Swap(I, Self.fHigh - (I - 1));
     end;
 
   end;
