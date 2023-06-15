@@ -29,3 +29,62 @@ The total amount of memory in bytes reserved for the array.
 
 **`Empty: Boolean`** *READ ONLY*<br>
 Returns `TRUE` if `SIZE` is 0.
+
+#### Constructors
+**`Create(const aNumElements: UINT32)`**<br>
+Creates a TDynArray with aNumElements useable elements. Allocated memory is twice the size needed to store the elements.
+
+**`Create(const aNumElements: UINT32`**<br> const aDefaultValue: T)`**<br>
+Creates a TDynArray with aNumElements useable elements initialized to aDefualtValue. Allocated memory is twice the size needed to store the elements.
+
+#### Procedures
+
+**`Resize(const aLength: UINT32)`**<br>
+Adjusts the number of useable elements to aLength. If `aLength` is <= the current `Size`, no memory operations are made. If `aLength` is > `Size`, memory is reallocated as twice the amount needed to store the elements.
+
+**`TrimBack(const aCount: UINT32)`**<br>
+Removes `aCount` useable elements from the end of the array. If `aCount` is 1, the effect is the same as calling `PopBack`. If `aCount` is > `Size` the number of useable elements is set to 0. 
+
+**`TrimFront(const aCount: UINT32)`**<br>
+Removes `aCount` useable elements from the beginning of the array. If `aCount` is 1, the effect is the same as calling `PopFont`. If `aCount` is > `Size` the number of useable elements is set to 0. 
+
+**`TrimRange(const aStartIndex, aEndIndex: UINT32)`**<br>
+Removes removes useable elements from the array in the range of `aStartIndex` to `aEndIndex` inclusive. If size of the range is 1, the effect is the same as calling `Delete(aStartIndex)`.<br>
+If `aStartIndex` is > `High`, `TrimRange` has no effect.<br>
+if `aEndIndex` is > `High` its value is set to the value of `High`.
+
+**`ShrinkToSize()`**<br>
+Reallocates memory to only that amount necessary to store the number of useable elements.
+
+**`Reserve(const aLength: UINT32)`**<br>
+Changes the amount of reserved memory to `aLength * TypeSize` bytes, effectively changing `MaxSize` to `aLength`.<br>
+If `aLength` is <= `Size` then no operations are performed.
+
+**`PushBack(const Value: T)`**<br>
+
+**`PushBack(const Values: Array of T)`**<br>
+
+**`PushFront(const Value: T)`**<br>
+
+**`PushFront(const Values: Array of T)`**<br>
+
+**`PopBack()`**<br>
+
+**`PopFront()`**<br>
+
+**`Insert(const aIndex: UINT32; const Value: array of T)`**<br>
+
+**`Delete(const Index: UINT32)`**<br>
+
+**`FindDeleteFirst(const Value: T)`**<br>
+
+**`FindDeleteLast(const Value: T)`**<br>
+
+**`FindDeleteAll(const Value: T)`**<br>
+
+**`FindFirst(const Value: T): INT32`**<br>
+
+**`FindLast(const Value: T): INT32`**<br>
+
+**`FindAll(const Value: T): TArray<UINT32>`**<br> 
+
