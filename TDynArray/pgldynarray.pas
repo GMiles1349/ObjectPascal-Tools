@@ -2,6 +2,8 @@ unit PGLDynArray;
 
 {$mode ObjFPC}{$H+}
 {$modeswitch ADVANCEDRECORDS}
+{$modeswitch TYPEHELPERS}
+{$INLINE ON}
 {$INCLUDE pgldynarray.inc}
 
 interface
@@ -43,13 +45,13 @@ type
       constructor Create(const aNumElements: UINT32); overload;
       constructor Create(const aNumElements: UINT32; const aDefaultValue: T); overload;
 
-      procedure Resize(const aLength: UINT32);
-      procedure TrimBack(const aCount: UINT32);
-      procedure TrimFront(const aCount: UINT32);
-      procedure TrimRange(const aStartIndex, aEndIndex: UINT32);
-      procedure ShrinkToSize();
-      procedure Reserve(const aLength: UINT32);
-      procedure PushBack(const Value: T); overload;
+      procedure Resize(const aLength: UINT32); inline;
+      procedure TrimBack(const aCount: UINT32);  inline;
+      procedure TrimFront(const aCount: UINT32); inline;
+      procedure TrimRange(const aStartIndex, aEndIndex: UINT32); inline;
+      procedure ShrinkToSize();  inline;
+      procedure Reserve(const aLength: UINT32);  inline;
+      procedure PushBack(const Value: T); overload;  inline;
       procedure PushBack(const Values: Array of T); overload;
       procedure PushFront(const Value: T); overload;
       procedure PushFront(const Values: Array of T); overload;
@@ -64,10 +66,10 @@ type
       procedure Reverse();
       procedure CopyToBuffer(var aBuffer: Pointer);
       procedure CopyToArray(var Arr: specialize TArray<T>);
-      procedure CopyToDynArray(var aDynArr: TDynArray);
-      procedure Combine(var aDynArr: TDynArray); overload;
+      procedure CopyToDynArray(var Arr: TDynArray);
+      procedure Combine(var Arr: TDynArray); overload;
       procedure Combine(var Arr: specialize TArray<T>); overload;
-      procedure OverWrite(var aDynArr: TDynArray; aIndex: UINT32); overload;
+      procedure OverWrite(var Arr: TDynArray; aIndex: UINT32); overload;
       procedure OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32); overload;
 
       function FindFirst(const Value: T): INT32;
@@ -78,6 +80,7 @@ type
       class operator = (Arr1,Arr2: TDynArray): Boolean;
 
   end;
+
 
 implementation
 
@@ -458,21 +461,21 @@ procedure TDynArray.CopyToArray(var Arr: specialize TArray<T>);
   end;
 
 
-procedure TDynArray.CopyToDynArray(var aDynArr: TDynArray);
+procedure TDynArray.CopyToDynArray(var Arr: TDynArray);
 	begin
-  	aDynArr.Resize(Self.Size);
-    aDynArr.ShrinkToSize();
-    Move(Self.fElements[0], aDynArr.fElements[0], Self.fMemUsed);
+  	Arr.Resize(Self.Size);
+    Arr.ShrinkToSize();
+    Move(Self.fElements[0], Arr.fElements[0], Self.fMemUsed);
   end;
 
 
-procedure TDynArray.Combine(var aDynArr: TDynArray);
+procedure TDynArray.Combine(var Arr: TDynArray);
 var
 Place: UINT32;
   begin
     Place := Self.fSize;
-    Self.Resize(Self.fSize + aDynArr.fSize);
-    Move(aDynArr.fElements[0], Self.fElements[Place], aDynArr.fMemUsed);
+    Self.Resize(Self.fSize + Arr.fSize);
+    Move(Arr.fElements[0], Self.fElements[Place], Arr.fMemUsed);
   end;
 
 
@@ -488,13 +491,13 @@ Len: UINT32;
   end;
 
 
-procedure TDynArray.OverWrite(var aDynArr: TDynArray; aIndex: UINT32);
+procedure TDynArray.OverWrite(var Arr: TDynArray; aIndex: UINT32);
 var
 NewSize: UINT32;
   begin
-    NewSize := (aIndex - 1) + aDynArr.Size;
+    NewSize := (aIndex - 1) + Arr.Size;
     if NewSize > Self.fSize then Self.UpdateLength(NewSize);
-    Move(aDynArr.fElements[0], Self.fElements[aIndex], aDynArr.fMemUsed);
+    Move(Arr.fElements[0], Self.fElements[aIndex], Arr.fMemUsed);
   end;
 
 
