@@ -1,10 +1,23 @@
 unit PGLDynArray;
 
+{$INCLUDE pgldynarray.inc}
+
+{$INLINE ON}
+{$MACRO ON}
+
 {$mode ObjFPC}{$H+}
 {$modeswitch ADVANCEDRECORDS}
 {$modeswitch TYPEHELPERS}
-{$INLINE ON}
-{$INCLUDE pgldynarray.inc}
+
+
+
+{$IFOPT D+}
+  {$DEFINE DEBUG_ON}
+{$ENDIF}
+
+{$DEFINE RELEASE_INLINE :=
+  {$IFNDEF DEBUG_ON} inline; {$ENDIF}
+}
 
 interface
 
@@ -14,44 +27,46 @@ uses
 type
 
 	generic TDynArray<T> = record
+    type TDynTypePointer =^T;
   	private
     	fTypeSize: UINT32;
     	fSize: UINT32;
-    	fMaxSize: UINT32;
+    	fCapacity: UINT32;
     	fHigh: INT32;
     	fMemUsed: UINT32;
     	fMemReserved: UINT32;
     	fElements: array of T;
 
-    	function GetElement(Index: UINT32): T;
-      function GetData(): Pointer;
-      function GetEmpty(): Boolean;
+    	function GetElement(const Index: UINT32): T; RELEASE_INLINE
+      function GetElementData(const Index: UINT32): TDynTypePointer; RELEASE_INLINE
+      function GetData(): Pointer; RELEASE_INLINE
+      function GetEmpty(): Boolean; RELEASE_INLINE
 
-      procedure SetElement(const Index: UINT32; Value: T);
+      procedure SetElement(const Index: UINT32; const Value: T); RELEASE_INLINE
 
-      procedure UpdateLength(const aLength: UINT32); register; inline;
+      procedure UpdateLength(const aLength: UINT32); RELEASE_INLINE
 
     public
     	property Data: Pointer read GetData;
       property Element[Index: UINT32]: T read GetElement write SetElement;
+      property ElementData[Index: UINT32]: TDynTypePointer read GetElementData;
     	property TypeSize: UINT32 read fTypeSize;
       property Size: UINT32 read fSize;
-    	property MaxSize: UINT32 read fMaxSize;
+    	property MaxSize: UINT32 read fCapacity;
       property High: INT32 read fHigh;
     	property MemoryUsed: UINT32 read fMemUsed;
     	property MemoryReserved: UINT32 read fMemReserved;
       property Empty: Boolean read GetEmpty;
 
-      constructor Create(const aNumElements: UINT32); overload;
-      constructor Create(const aNumElements: UINT32; const aDefaultValue: T); overload;
+      constructor Create(const aCapacity: UINT32);
 
-      procedure Resize(const aLength: UINT32); inline;
-      procedure TrimBack(const aCount: UINT32);  inline;
-      procedure TrimFront(const aCount: UINT32); inline;
-      procedure TrimRange(const aStartIndex, aEndIndex: UINT32); inline;
-      procedure ShrinkToSize();  inline;
-      procedure Reserve(const aLength: UINT32);  inline;
-      procedure PushBack(const Value: T); overload;  inline;
+      procedure Resize(const aLength: UINT32); RELEASE_INLINE
+      procedure TrimBack(const aCount: UINT32);  RELEASE_INLINE
+      procedure TrimFront(const aCount: UINT32); RELEASE_INLINE
+      procedure TrimRange(const aStartIndex, aEndIndex: UINT32); RELEASE_INLINE
+      procedure ShrinkToSize();  RELEASE_INLINE
+      procedure Reserve(const aLength: UINT32);  RELEASE_INLINE
+      procedure PushBack(const Value: T); overload;  RELEASE_INLINE
       procedure PushBack(const Values: Array of T); overload;
       procedure PushFront(const Value: T); overload;
       procedure PushFront(const Values: Array of T); overload;
@@ -89,7 +104,7 @@ class operator TDynArray.Initialize(var Dest: TDynArray);
   	Dest.fTypeSize := SizeOf(T);
     Dest.fSize := 0;
     Dest.fHigh := -1;
-    Dest.fMaxSize := 0;
+    Dest.fCapacity := 0;
     Dest.fMemUsed := 0;
     Dest.fMemReserved := 0;
     Initialize(Dest.fElements);
@@ -102,34 +117,18 @@ class operator TDynArray.= (Arr1,Arr2: TDynArray): Boolean;
   end;
 
 
-constructor TDynArray.Create(const aNumElements: UINT32); overload;
+constructor TDynArray.Create(const aCapacity: UINT32);
 	begin
-  	SetLength(Self.fElements, aNumElements);
-    Self.fSize := 0;
     Self.fHigh := -1;
-    Self.fMaxSize := aNumElements;
-    Self.fMemUsed := Self.fTypeSize * aNumElements;
-    Self.fMemReserved := Self.fMemUsed;
+    Self.fSize := 0;
+    Self.fCapacity := aCapacity;
+    SetLength(Self.fElements, aCapacity);
+    Self.fMemUsed := 0;
+    Self.fMemReserved := Self.fTypeSize * aCapacity;
   end;
 
 
-constructor TDynArray.Create(const aNumElements: UINT32; const aDefaultValue: T); overload;
-var
-I: Cardinal;
-	begin
-  	SetLength(Self.fElements, aNumElements);
-    Self.fSize := aNumElements;
-    Self.fHigh := Self.fSize - 1;
-    Self.fMaxSize := aNumElements;
-    Self.fMemUsed := Self.fTypeSize * aNumElements;
-    Self.fMemReserved := Self.fMemUsed;
-    for I := 0 to Self.fHigh do begin
-    	Self.fElements[I] := aDefaultValue;
-    end;
-  end;
-
-
-function TDynArray.GetElement(Index: UINT32): T;
+function TDynArray.GetElement(const Index: UINT32): T;
 	begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
     if Index > fHigh then begin
@@ -141,6 +140,16 @@ function TDynArray.GetElement(Index: UINT32): T;
   	Exit(Self.fElements[Index]);
   end;
 
+
+function TDynArray.GetElementData(const IndeX: UINT32): TDynTypePointer;
+  begin
+    {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKNIG}
+    if Index > fHigh then begin
+      Exit(nil);
+    end;
+    {$ENDIF}
+    Exit(@Self.fElements[Index]);
+  end;
 
 function TDynArray.GetData(): Pointer;
 	begin
@@ -158,19 +167,23 @@ function TDynArray.GetEmpty(): Boolean;
 procedure TDynArray.UpdateLength(const aLength: UINT32);
 	begin
   	Self.fSize := aLength;
-    Self.fHigh := Self.fSize - 1;
+    if Self.fSize <> 0 then begin
+      Self.fHigh := Self.fSize - 1;
+    end else begin
+      Self.fHigh := -1;
+    end;
 
     Self.fMemUsed := Self.fHigh * Self.fTypeSize;
 
-    if Self.fSize > Self.fMaxSize then begin
-    	Self.fMaxSize := Self.fSize * 2;
-      Self.fMemReserved := Self.fTypeSize * Self.fMaxSize;
-      SetLength(Self.fElements, Self.fMaxSize);
+    if Self.fSize > Self.fCapacity then begin
+    	Self.fCapacity := Self.fSize * 2;
+      Self.fMemReserved := Self.fTypeSize * Self.fCapacity;
+      SetLength(Self.fElements, Self.fCapacity);
     end;
   end;
 
 
-procedure TDynArray.SetElement(const Index: UINT32; Value: T);
+procedure TDynArray.SetElement(const Index: UINT32; const Value: T);
 	begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
     	if Index > Self.fHigh then Exit;
@@ -253,19 +266,19 @@ TrimLen: UINT32;
 procedure TDynArray.ShrinkToSize();     
 	begin
   	SetLength(Self.fElements, Self.fSize);
-    Self.fMaxSize := Self.fSize;
+    Self.fCapacity := Self.fSize;
     Self.fHigh := Self.fSize - 1;
-    Self.fMemReserved := Self.fMaxSize * Self.fTypeSize;
+    Self.fMemReserved := Self.fCapacity * Self.fTypeSize;
   	Self.fMemUsed := Self.fSize * Self.fTypeSize;
   end;
 
 
 procedure TDynArray.Reserve(const aLength: UINT32);
 	begin
-  	if aLength > Self.fMaxSize then begin
-    	Self.fMaxSize := aLength;
+  	if aLength > Self.fCapacity then begin
+    	Self.fCapacity := aLength;
       SetLength(Self.fElements, aLength);
-      Self.fMemReserved := Self.fMaxSize * Self.fTypeSize;
+      Self.fMemReserved := Self.fCapacity * Self.fTypeSize;
     end;
   end;
 
