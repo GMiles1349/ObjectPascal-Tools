@@ -218,7 +218,7 @@ var
 S, E: UINT32;
 MoveSize: UINT32;
 TrimLen: UINT32;
-	begin
+  begin
 
     // if start and end are the same call Delete() instead
     if aStartIndex = aEndIndex then begin

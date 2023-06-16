@@ -463,9 +463,9 @@ procedure TDynArray.CopyToArray(var Arr: specialize TArray<T>);
 
 procedure TDynArray.CopyToDynArray(var Arr: TDynArray);
 	begin
-  	aDynArr.Resize(Self.Size);
-    aDynArr.ShrinkToSize();
-    Move(Self.fElements[0], aDynArr.fElements[0], Self.fMemUsed);
+  	Arr.Resize(Self.Size);
+    Arr.ShrinkToSize();
+    Move(Self.fElements[0], Arr.fElements[0], Self.fMemUsed);
   end;
 
 
@@ -474,8 +474,8 @@ var
 Place: UINT32;
   begin
     Place := Self.fSize;
-    Self.Resize(Self.fSize + aDynArr.fSize);
-    Move(aDynArr.fElements[0], Self.fElements[Place], aDynArr.fMemUsed);
+    Self.Resize(Self.fSize + Arr.fSize);
+    Move(Arr.fElements[0], Self.fElements[Place], Arr.fMemUsed);
   end;
 
 
@@ -495,9 +495,9 @@ procedure TDynArray.OverWrite(var Arr: TDynArray; aIndex: UINT32);
 var
 NewSize: UINT32;
   begin
-    NewSize := (aIndex - 1) + aDynArr.Size;
+    NewSize := (aIndex - 1) + Arr.Size;
     if NewSize > Self.fSize then Self.UpdateLength(NewSize);
-    Move(aDynArr.fElements[0], Self.fElements[aIndex], aDynArr.fMemUsed);
+    Move(Arr.fElements[0], Self.fElements[aIndex], Arr.fMemUsed);
   end;
 
 
