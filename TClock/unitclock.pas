@@ -116,6 +116,7 @@ type
       property ElapsedHMS: TTimeStruct read fElapsedHMS;
 
       constructor Create(AInterval: Double);
+      destructor Destroy(); override;
 
       procedure Start(); inline;
       procedure Stop(); inline;
@@ -321,6 +322,15 @@ constructor TClock.Create(AInterval: Double);
   	Self.fInterval := AInterval;
     Self.GetResolution();
     Self.Init();
+  end;
+
+destructor TClock.Destroy();
+  begin
+    while Length(Self.fEvents) > 0 do begin
+      Self.RemoveEvent(Self.fEvents[0]);
+    end;
+
+    inherited;
   end;
 
 procedure TClock.Init();
