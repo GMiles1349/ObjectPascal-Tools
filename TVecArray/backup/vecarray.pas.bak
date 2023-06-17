@@ -80,7 +80,7 @@ type
       procedure Reverse();
       procedure CopyToBuffer(var aBuffer: Pointer);
       procedure CopyToArray(var Arr: specialize TArray<T>);
-      procedure CopyToVecArray(var Arr: TVecArray);
+      procedure CopyToDynArray(var Arr: TVecArray);
       procedure Combine(var Arr: TVecArray); overload;
       procedure Combine(var Arr: specialize TArray<T>); overload;
       procedure OverWrite(var Arr: TVecArray; aIndex: UINT32); overload;
@@ -473,7 +473,7 @@ procedure TVecArray.CopyToArray(var Arr: specialize TArray<T>);
   end;
 
 
-procedure TVecArray.CopyToVecArray(var Arr: TVecArray);
+procedure TVecArray.CopyToDynArray(var Arr: TVecArray);
 	begin
   	Arr.Resize(Self.Size);
     Arr.ShrinkToSize();

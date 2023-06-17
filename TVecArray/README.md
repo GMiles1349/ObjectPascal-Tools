@@ -9,12 +9,21 @@ Additionally, the there is an option to enable RELEASE_INLINE, which is a macro 
 There is currently no support of nested/multi-dimensional TVecArrays. This is planned.
 
 ##
+## Types
+**`TTypePointer = ^T`**
+TTypePointer is a typed pointer of that type of the TVecArray.
+Ex. if TVecArray has a type of `Byte`, then TTypePointer is equivalent to `^Byte` or `PByte`.
+
+##
 ## Properties
 **`Data: Pointer`** *READ ONLY*<br>
 Pointer to the first element of the array. If the array has a length of 0, returns nil.
 
 **`Element[Index: UINT32]: <T>`** *READ/WRITE*<br>
 Read or write to element of array.
+
+**`ElementData[Index: UINT32]: TTypePointer`** *READ ONLY*<br>
+Pointer to the element at index `Index`.
 
 **`TypeSize: UINT32`** *READ ONLY*<br>
 The size in bytes of the array's data type.
@@ -106,12 +115,47 @@ if `Size` is 0, `FindDeleteLast()` does nothing.
 `FindDeleteAll()` iterates through the array starting at index 0 and calls `Delete()` for each element that has a value of `Value`.
 if `Size` is 0, `FindDeleteAll()` does nothing.
 
+**`Swap(aIndex1, aIndex2: UINT32)`**<br>
+Swaps the values of the `Element[aIndex1]` and `Element[aIndex2]`.
+if `aIndex` and `aIndex2` are the same value, then `Swap()` does nothing.
+If bounds checking is enabled, then no operation is performed if `aIndex1` or `aIndex2` are greater than `High`.
+
+**`Reverse()`**<br>
+Reverses the elements of the array, as though the array had been copied to itself backwards from the highest index to index 0.
+
+**`CopyToBuffer(var aBuffer: Pointer)`**<br>
+Performs a single copy of the array data up to index `High` to the memory address contained in `aBuffer`.
+
+**`CopyToArray(var Arr: specialize TArray<T>)`**<br>
+Performs a single copy of the array data up to index `High` to `Arr`. `Arr` is set to length `Size`.
+
+**`CopyToVecArray(var Arr: TVecArray)`**<br>
+Performs a single copy of the array data up to index `High` to the memory of `Arr`. `Arr`'s `Capacity` is set to `Size`.
+
+**`Combine(var Arr: TVecArray)`**<br>
+Calls `Insert(Self.High, Arr.Data)`, appending `Arr`'s data to the end the array and incrementing `Size` by the `Arr.Size`. If the new `Size` would exceed `Capacity`, memory is reallocated at twice the size needed to store the number of useable elements. 
+
+**`Combine(var Arr: specialize TArray<T>)`**<br>
+Calls `Insert(Self.High, Arr)`, appending `Arr` to the end of the array and incrementing `Size` by the lenght of `Arr`. If the new `Size` would exceed `Capacity`, memory is reallocated at twice the size needed to store the numbef of useable elements.
+
+**`OverWrite(var Arr: TVecArray; aIndex: UINT32)`**<br>
+
+
+**`OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32)`**<br>
+
+
 ##
 ## Functions
 
 **`FindFirst(const Value: T):`** ***INT32***<br>
+Returns the lowest index element with a value of `Value`.
+If no elements equal `Value`, -1 is returned.
 
 **`FindLast(const Value: T):`** ***INT32***<br>
+Returns the highest index element with a value of `Value`.
+If no elements equal `Value`, -1 is returned.
 
 **`FindAll(const Value: T):`** ***TArray<UINT32>***<br> 
+Returns an array containing the indices of all elements that have a value of `Value`.
+If no elements equal `Value`, a 0 length array is returned.
 
