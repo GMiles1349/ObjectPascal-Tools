@@ -9,14 +9,8 @@ unit PGLDynArray;
 {$modeswitch ADVANCEDRECORDS}
 {$modeswitch TYPEHELPERS}
 
-
-
-{$IFOPT D+}
-  {$DEFINE DEBUG_ON}
-{$ENDIF}
-
 {$DEFINE RELEASE_INLINE :=
-  {$IFNDEF DEBUG_ON} inline; {$ENDIF}
+  {$IFOPT D+}  {$ELSE} inline; {$ENDIF}
 }
 
 interface
@@ -130,7 +124,7 @@ constructor TDynArray.Create(const aCapacity: UINT32);
 
 function TDynArray.GetElement(const Index: UINT32): T;
 	begin
-    {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
+    {$IFDEF ENABLE_BOUNDS_CHECKING}
     if Index > fHigh then begin
       Initialize(Result);
     	FillByte(Result, fTypeSize, 0);
@@ -173,7 +167,7 @@ procedure TDynArray.UpdateLength(const aLength: UINT32);
       Self.fHigh := -1;
     end;
 
-    Self.fMemUsed := Self.fHigh * Self.fTypeSize;
+    Self.fMemUsed := Self.fSize * Self.fTypeSize;
 
     if Self.fSize > Self.fCapacity then begin
     	Self.fCapacity := Self.fSize * 2;

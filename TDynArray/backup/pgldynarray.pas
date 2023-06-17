@@ -1,18 +1,16 @@
 unit PGLDynArray;
 
+{$INCLUDE pgldynarray.inc}
+
+{$INLINE ON}
+{$MACRO ON}
+
 {$mode ObjFPC}{$H+}
 {$modeswitch ADVANCEDRECORDS}
 {$modeswitch TYPEHELPERS}
-{$INLINE ON}
-{$MACRO ON}
-{$INCLUDE pgldynarray.inc}
-
-{$IFOPT D+}
-  {$DEFINE DEBUG_ON}
-{$ENDIF}
 
 {$DEFINE RELEASE_INLINE :=
-  {$IFNDEF DEBUG_ON} RELEASE_INLINE {$ENDIF}
+  {$IFOPT D+}  {$ELSE} inline; {$ENDIF}
 }
 
 interface
@@ -126,7 +124,7 @@ constructor TDynArray.Create(const aCapacity: UINT32);
 
 function TDynArray.GetElement(const Index: UINT32): T;
 	begin
-    {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
+    {$IFDEF ENABLE_BOUNDS_CHECKING}
     if Index > fHigh then begin
       Initialize(Result);
     	FillByte(Result, fTypeSize, 0);
