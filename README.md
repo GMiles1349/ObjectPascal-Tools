@@ -4,3 +4,6 @@ Everything should be considered a work in progress.
 
 TVecArray
 - Similar to C++'s std::vector
+
+TClock
+- A class that aides in querying CPU and real (hour, minute, second) time, as well as measuring spans of time and executing events.
