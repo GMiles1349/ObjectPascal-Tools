@@ -4,4 +4,4 @@
 {.$DEFINE ENABLE_BOUNDS_CHECKING}
 
 (* toggle RELEASE_INLINE, release build only function inlining *)
-{.$DEFINE ENABLE_RELEASE_INLINE}
+{$DEFINE ENABLE_RELEASE_INLINE}
