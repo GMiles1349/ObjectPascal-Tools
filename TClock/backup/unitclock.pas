@@ -91,9 +91,12 @@ type
       fEvents: Array of TClockEvent;
 
       procedure Init();
+      procedure Update();
+
       function GetResolution(): Int64;
       function GetTime(): Double;
-      procedure Update();
+      function GetEvent(Index: UINT32): TClockEvent;
+
       procedure SetInterval(const aInterval: Double); inline;
 
       procedure AddEvent(const aEvent: TClockEvent); inline;
@@ -114,6 +117,7 @@ type
       property InitTime: Double read fInitTime;
       property InitHMS: TTimeStruct read fInitHMS;
       property ElapsedHMS: TTimeStruct read fElapsedHMS;
+      property Event[Index: UINT32]: TClockEvent read GetEvent;
 
       constructor Create(AInterval: Double);
       destructor Destroy(); override;
@@ -125,6 +129,7 @@ type
       function PollHMSTime(): TTimeStruct; inline;
       function CPUTimeToHMS(const aCPUTime: Double): TTimeStruct; inline;
       function HMStoCPUTime(const aHMS: TTimeStruct): Double; inline;
+      function EventList(): specialize TArray<TClockEvent>;
 
   end;
 
@@ -325,10 +330,8 @@ constructor TClock.Create(AInterval: Double);
   end;
 
 destructor TClock.Destroy();
-var
-I: Integer;
   begin
-    while Length(Self.fEvents) > 0 then begin
+    while Length(Self.fEvents) > 0 do begin
       Self.RemoveEvent(Self.fEvents[0]);
     end;
 
@@ -368,6 +371,17 @@ Th, Tm, Ts, Ts100: WORD;
   	clock_gettime(CLOCK_MONOTONIC, @Self.TP);
     Result := Self.TP.tv_sec + (Self.TP.tv_nsec * 1e-9);
 	end;
+
+function TClock.GetEvent(Index: UINT32): TClockEvent;
+  begin
+    if Index > High(Self.fEvents) then Exit(nil);
+    Exit(Self.fEvents[Index]);
+  end;
+
+function TClock.EventList(): specialize TArray<TClockEvent>;
+  begin
+
+  end;
 
 procedure TClock.Update();
 	begin
