@@ -20,10 +20,13 @@ uses
 
 type
 
-  TClockHour = UINT16;
-  TClockMinute = UINT16;
-  TClockSecond = UINT16;
-  TClockSecond100 = UINT16;
+  TEventProc = procedure();
+  TTriggerType = (TRIGGER_ON_INTERVAL = 0, TRIGGER_ON_TIME = 1);
+
+  TClockHour = INT32;
+  TClockMinute = INT32;
+  TClockSecond = INT32;
+  TClockSecond100 = INT32;
 
   TClock = class;
   TClockEvent = class;
@@ -40,6 +43,14 @@ type
       procedure SetSecond(const Value: TClockSecond); inline;
       procedure SetSecond100(const Value: TClockSecond100); inline;
 
+      // 000,000,000
+      // | |  |  |
+			// | |  |  Second100 * 100
+			// | |  Second * 10,000
+			// | Minute * 1,000,000
+			// Hour * 100,000,000
+      function GetIntValue(): UINT32
+
     public
       property Hour: TClockHour read fHour write SetHour;
       property Minute: TClockMinute read fMinute write SetMinute;
@@ -48,6 +59,13 @@ type
 
 	    class operator Initialize(var aTimeStruct: TTimeStruct);
       class operator + (ts1, ts2: TTimeStruct): TTimeStruct;
+      class operator - (ts1, ts2: TTimeStruct): TTimeStruct;
+      class operator > (ts1, ts2: TTimeStruct): Boolean;
+      class operator < (ts1, ts2: TTimeStruct): Boolean;
+      class operator >= (ts1, ts2: TTimeStruct): Boolean;
+      class operator <= (ts1, ts2: TTimeStruct): Boolean;
+      class operator = (ts1, ts2: TTimeStruct): Boolean;
+      class operator <> (ts1, ts2: TTimeStruct): Boolean;
   end;
 
 
@@ -55,6 +73,7 @@ type
   	private
     	fRunning: Boolean;
       fInterval: Double;
+      fInitTime: Double;
       fCurrentTime: Double;
       fLastTime: Double;
       fTargetTime: Double;
@@ -65,16 +84,25 @@ type
       fFrameTime: Double;
       fResolution: Int64;
       fHMS: TTimeStruct;
+      fInitHMS: TTimeStruct;
+      fElapsedHMS: TTimeStruct;
       TP: timespec;
 
-      procedure Init(); register;
-      function GetResolution(): Int64; register;
-      function GetTime(): Double; register;
-      procedure Update(); register;
+      fEvents: Array of TClockEvent;
+
+      procedure Init();
+      function GetResolution(): Int64;
+      function GetTime(): Double;
+      procedure Update();
+      procedure SetInterval(const aInterval: Double); inline;
+
+      procedure AddEvent(const aEvent: TClockEvent); inline;
+      procedure RemoveEvent(const aEvent: TClockEvent); inline;
+      procedure HandleEvents(); inline;
 
     public
       property Running: Boolean read fRunning;
-      property Interval: Double read fInterval;
+      property Interval: Double read fInterval write SetInterval;
       property CurrentTime: Double read fCurrentTime;
       property LastTime: Double read fLastTime;
       property TargetTime: Double read fTargetTime;
@@ -83,29 +111,73 @@ type
       property FramesPerSecond: Double read fFramesPerSecond;
       property Resolution: Int64 read fResolution;
       property HMS: TTimeStruct read fHMS;
+      property InitTime: Double read fInitTime;
+      property InitHMS: TTimeStruct read fInitHMS;
+      property ElapsedHMS: TTimeStruct read fElapsedHMS;
 
       constructor Create(AInterval: Double);
 
-      procedure Start(); register;
-      procedure Stop(); register;
-      procedure Wait(); register;
+      procedure Start(); inline;
+      procedure Stop(); inline;
+      procedure Wait(); inline;
+      function PollCPUTime(): Double; inline;
+      function PollHMSTime(): TTimeStruct; inline;
+      function CPUTimeToHMS(const aCPUTime: Double): TTimeStruct; inline;
+      function HMStoCPUTime(const aHMS: TTimeStruct): Double; inline;
 
   end;
 
 
   TClockEvent = class(TPersistent)
     private
+      fActive: Boolean;
+      fRepeating: Boolean;
+      fTriggerType: TTriggerType;
+      fTriggerInterval: Double;
+      fLastTrigger: Double;
+      fNextTrigger: Double;
+      fTriggerTime: TTimeStruct;
+      fOwner: TClock;
+      fEventProc: TEventProc;
+
+      procedure SetActive(const aActive: Boolean); inline;
+      procedure SetRepeating(const aRepeating: Boolean); inline;
+      procedure SetTriggerType(const aTriggerType: TTriggerType); inline;
+      procedure SetTriggerInterval(const aTriggerInterval: Double); inline;
+      procedure SetTriggerTime(const aTriggerTime: TTimeStruct); inline;
+      procedure SetOwner(const aOwner: TClock); inline;
+      procedure SetEventProc(const aEventProc: TEventProc); inline;
+
+      function GetTriggerInterval(): Double; inline;
+      function GetTriggerTime(): TTimeStruct; inline;
+      function GetNextTrigger(): Double; inline;
+
+      procedure CheckTrigger(); inline;
+      procedure TryExecute(); inline;
 
     public
+      property Active: Boolean read fActive write SetActive;
+      property Repeating: Boolean read fRepeating write SetRepeating;
+      property TriggerType: TTriggerType read fTriggerType write SetTriggerType;
+      property TriggerInterval: Double read GetTriggerInterval write SetTriggerInterval;
+      property NextTrigger: Double read GetNextTrigger;
+      property TriggerTime: TTimeStruct read GetTriggerTime write SetTriggerTime;
+      property Owner: TClock read fOwner write SetOwner;
+      property EventProc: TEventProc read fEventProc write SetEventProc;
+
+      constructor Create(); overload;
+      constructor Create(aOwner: TClock; aTriggerType: TTriggerType; aRepeating: Boolean); overload;
+      destructor Destroy(); override;
 
   end;
 
 
-  function TimeStruct(const aHour: TClockHour = 0; const aMinute: TClockMinute = 0; const aSecond: TClockSecond = 0; const aSecond100: TClockSecond100 = 0): TTimeStruct;
+  function TimeStruct(aHour: TClockHour = 0; aMinute: TClockMinute = 0; aSecond: TClockSecond = 0; aSecond100: TClockSecond100 = 0): TTimeStruct;
+
 
 implementation
 
-function TimeStruct(const aHour: TClockHour = 0; const aMinute: TClockMinute = 0; const aSecond: TClockSecond = 0; const aSecond100: TClockSecond100 = 0): TTimeStruct;
+function TimeStruct(aHour: TClockHour = 0; aMinute: TClockMinute = 0; aSecond: TClockSecond = 0; aSecond100: TClockSecond100 = 0): TTimeStruct;
   begin
     Initialize(Result);
     Result.Second100 := aSecond100;
@@ -129,13 +201,12 @@ class operator TTimeStruct.Initialize(var aTimeStruct: TTimeStruct);
     aTimeStruct.fSecond100 := 0;
   end;
 
+
 procedure TTimeStruct.SetHour(const Value: TClockHour);
   begin
     Self.fHour := Value;
-    while Self.fHour > 23 do begin
-      Self.fHour := Self.fHour - 24;
-    end;
   end;
+
 
 procedure TTimeStruct.SetMinute(const Value: TClockMinute);
   begin
@@ -144,7 +215,13 @@ procedure TTimeStruct.SetMinute(const Value: TClockMinute);
       Self.fMinute := Self.fMinute - 60;
       Self.Hour := Self.fHour + 1;
     end;
+
+    while Self.fMinute < 0 do begin
+      Self.fMinute := Self.fMinute + 60;
+      Self.Hour := Self.fHour - 1;
+    end;
   end;
+
 
 procedure TTimeStruct.SetSecond(const Value: TClockSecond);
   begin
@@ -153,7 +230,13 @@ procedure TTimeStruct.SetSecond(const Value: TClockSecond);
       Self.fSecond := Self.fSecond - 60;
       Self.Minute := Self.fMinute + 1;
     end;
+
+    while Self.fSecond < 0 do begin
+      Self.fSecond := Self.fSecond + 60;
+      Self.Minute := Self.fMinute - 1;
+    end;
   end;
+
 
 procedure TTimeStruct.SetSecond100(const Value: TClockSecond100);
   begin
@@ -162,8 +245,21 @@ procedure TTimeStruct.SetSecond100(const Value: TClockSecond100);
       Self.fSecond100 := Self.fSecond100 - 100;
       Self.Second := Self.fSecond + 1;
     end;
+
+    while Self.fSecond100 < 0 do begin
+      Self.fSecond100 := Self.fSecond100 + 100;
+      Self.Second := Self.fSecond - 1;
+    end;
   end;
 
+
+function TTimeStruct.GetIntValue(): UINT32;
+  begin
+    Result := Self.fSecond100 * 100;
+    Result += self.fSecond * 10000;
+    Result += Self.fMinute * 1000000;
+    Result += Self.fHour * 100000000;
+  end;
 
 class operator TTimeStruct.+ (ts1, ts2: TTimeStruct): TTimeStruct;
   begin
@@ -172,6 +268,46 @@ class operator TTimeStruct.+ (ts1, ts2: TTimeStruct): TTimeStruct;
     Result.Second := ts1.fSecond + ts2.fSecond;
     Result.Minute := ts1.fMinute + ts2.fMinute;
     Result.Hour := ts1.fHour + ts2.fHour;
+  end;
+
+
+class operator TTimeStruct.- (ts1, ts2: TTimeStruct): TTimeStruct;
+  begin
+    Initialize(Result);
+    Result.Second100 := ts1.fSecond100 - ts2.fSecond100;
+    Result.Second := ts1.fSecond - ts2.fSecond;
+    Result.Minute := ts1.fMinute - ts2.fMinute;
+    Result.Hour := ts1.fHour - ts2.fHour;
+  end;
+
+class operator TTimeStruct.> (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue > ts2.GetIntValue);
+  end;
+
+class operator TTimeStruct.< (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue < ts2.GetIntValue);
+  end;
+
+class operator TTimeStruct.>= (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue >= ts2.GetIntValue);
+  end;
+
+class operator TTimeStruct.<= (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue <= ts2.GetIntValue);
+  end;
+
+class operator TTimeStruct.= (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue = ts2.GetIntValue);
+  end;
+
+class operator TTimeStruct.<> (ts1, ts2: TTimeStruct): Boolean;
+  begin
+    Exit(ts1.GetIntValue <> ts2.GetIntValue);
   end;
 
 (*///////////////////////////////////////////////////////////////////////////////////////)
@@ -208,8 +344,15 @@ function TClock.GetResolution(): Int64;
   end;
 
 function TClock.GetTime(): Double;
+var
+Th, Tm, Ts, Ts100: WORD;
 	begin
-    Time.GetTime(Self.fHMS.fHour, Self.fHMS.fMinute, Self.fHMS.fSecond, Self.fHMS.fSecond100);
+    Th := 0;
+    Tm := 0;
+    Ts := 0;
+    Ts100 := 0;
+    Time.GetTime(Th, Tm, Ts, Ts100);
+    Self.fHMS := TimeStruct(Th, Tm, Ts, Ts100);
   	clock_gettime(CLOCK_MONOTONIC, @Self.TP);
     Result := Self.TP.tv_sec + (Self.TP.tv_nsec * 1e-9);
 	end;
@@ -220,7 +363,8 @@ procedure TClock.Update();
     Self.fCurrentTime := Self.GetTime();
     Self.fTargetTime := Self.fCurrentTime + Self.fInterval;
     Self.fCycleTime := Self.fCurrentTime - Self.fLastTime;
-    Self.fElapsedTime := Self.fElapsedTime + Self.fCycleTime;
+    Self.fElapsedTime := Self.fCurrentTime - Self.fInitTime;
+    Self.fElapsedHMS := Self.fHMS - Self.fInitHMS;
 
     Self.fFrameTime := Self.fFrameTime + Self.fCycleTime;
     Self.fFrames := Self.fFrames + 1;
@@ -230,12 +374,23 @@ procedure TClock.Update();
       Self.fFrames := 0;
     end;
 
+    Self.HandleEvents();
+  end;
+
+procedure TClock.SetInterval(const aInterval: Double);
+  begin
+    Self.fInterval := abs(aInterval);
+    if Self.fRunning then begin
+      Self.fTargetTime := Self.fCurrentTime + Self.fInterval;
+    end;
   end;
 
 procedure TClock.Start();
 	begin
   	Self.Init();
     Self.fCurrentTime := Self.GetTime();
+    Self.fInitTime := Self.fCurrentTime;
+    Self.fInitHMS := Self.fHMS;
     Self.fLastTime := Self.fCurrentTime;
     Self.fTargetTime := Self.fCurrentTime + Self.fInterval;
     SElf.fRunning := True;
@@ -252,6 +407,281 @@ procedure TClock.Wait();
     end;
 
     Self.Update();
+  end;
+
+function TClock.PollCPUTime(): Double;
+  begin
+    clock_gettime(CLOCK_MONOTONIC, @Self.TP);
+    Result := Self.TP.tv_sec + (Self.TP.tv_nsec * 1e-9);
+  end;
+
+function TClock.PollHMSTime(): TTimeStruct;
+var
+Th, Tm, Ts, Ts100: WORD;
+  begin
+    Th := 0;
+    Tm := 0;
+    Ts := 0;
+    Ts100 := 0;
+    Time.GetTime(Th, Tm, Ts, Ts100);
+    Result := TimeStruct(th, Tm, Ts, Ts100);
+  end;
+
+function TClock.CPUTimeToHMS(const aCPUTime: Double): TTimeStruct;
+var
+Secs, Secs100: INT32;
+  begin
+    Secs := trunc(Self.fInitTime - aCPUTime);
+    Secs100 := trunc((aCPUTime - Secs) * 100);
+    Result := Self.fInitHMS + TimeStruct(0, 0, Secs, Secs100);
+  end;
+
+function TClock.HMStoCPUTime(const aHMS: TTimeStruct): Double;
+var
+Secs: Double;
+TS: TTimeStruct;
+  begin
+    TS := aHMS - Self.fInitHMS;
+    Secs := ((TS.fHour * 60) * 60);
+    Secs := Secs + (TS.fMinute * 60);
+    Secs := Secs + TS.fSecond;
+    Secs := Secs + (TS.fSecond100 / 100);
+    Result := Self.fInitTime + Secs;
+  end;
+
+procedure TClock.AddEvent(const aEvent: TClockEvent);
+var
+I: Integer;
+  begin
+    if Assigned(aEvent) = False then Exit;
+
+    for I := 0 to High(Self.fEvents) do begin
+      if Self.fEvents[I] = aEvent then Exit;
+    end;
+
+    I := Length(Self.fEvents);
+    SetLength(Self.fEvents, I + 1);
+    Self.fEvents[I] := aEvent;
+
+  end;
+
+procedure TClock.RemoveEvent(const aEvent: TClockEvent);
+var
+I: Integer;
+  begin
+
+    for I := 0 to High(Self.fEvents) do begin
+      if Self.fEvents[I] = aEvent then begin
+        Delete(Self.fEvents, I, 1);
+        Exit;
+      end;
+    end;
+
+  end;
+
+procedure TClock.HandleEvents();
+var
+I: Integer;
+  begin
+    if Length(Self.fEvents) = 0 then Exit;
+
+    I := 0;
+    while I = High(Self.fEvents) do begin
+
+      if Assigned(Self.fEvents[I]) = False then begin
+        Self.RemoveEvent(Self.fEvents[i]);
+
+      end else begin
+        if Self.fEvents[I].fActive then begin
+          Self.fEvents[I].TryExecute();
+        end;
+
+        Inc(I);
+      end;
+
+    end;
+  end;
+
+(*///////////////////////////////////////////////////////////////////////////////////////)
+(----------------------------------------------------------------------------------------)
+                                      TClockEvent
+(----------------------------------------------------------------------------------------)
+(///////////////////////////////////////////////////////////////////////////////////////*)
+
+constructor TClockEvent.Create();
+  begin
+    Self.fOwner := nil;
+    Self.fRepeating := False;
+    Self.fActive := False;
+    Self.fTriggerInterval := 0;
+    Self.fTriggerTime := TimeStruct(0,0,0,0);
+    Self.fTriggerType := TRIGGER_ON_INTERVAL;
+    Self.fEventProc := nil;
+    Self.fLastTrigger := 0;
+    Self.fNextTrigger := 0;
+  end;
+
+constructor TClockEvent.Create(aOwner: TClock; aTriggerType: TTriggerType; aRepeating: Boolean);
+  begin
+    Self.Owner := aOwner;
+    Self.fRepeating := aRepeating;
+    Self.fActive := False;
+    Self.fTriggerInterval := 0;
+    Self.fTriggerTime := TimeStruct(0,0,0,0);
+    Self.fTriggerType := aTriggerType;
+    Self.fEventProc := nil;
+    Self.fLastTrigger := 0;
+    Self.fNextTrigger := 0;
+  end;
+
+destructor TClockEvent.Destroy();
+  begin
+    if Assigned(Self.fOwner) then begin
+      Self.fOwner.RemoveEvent(Self);
+    end;
+
+    inherited;
+  end;
+
+procedure TClockEvent.CheckTrigger();
+  begin
+    case Self.fTriggerType of
+
+      TRIGGER_ON_INTERVAL:
+        begin
+
+        end;
+
+      TRIGGER_ON_TIME:
+        begin
+          if Self.fTriggerTime > Self.fOwner.HMS then Self.fActive := False;
+        end;
+
+    end;
+  end;
+
+procedure TClockEvent.TryExecute();
+  begin
+
+    case Self.fTriggerType of
+
+      TRIGGER_ON_INTERVAL:
+        begin
+          if Self.fOwner.PollCPUTime >= Self.fNextTrigger then begin
+
+            if Self.fRepeating then begin
+              Self.fLastTrigger := Self.fNextTrigger;
+              Self.fNextTrigger := Self.fNextTrigger + Self.fTriggerInterval;
+            end else begin
+              Self.SetActive(False);
+            end;
+
+            Self.fEventProc();
+
+          end;
+
+        end;
+
+      TRIGGER_ON_TIME:
+        begin
+          if Self.fOwner.PollHMSTime >= Self.fTriggerTime then begin
+            Self.SetActive(False);
+            Self.fEventProc();
+          end;
+        end;
+
+    end;
+
+  end;
+
+procedure TClockEvent.SetActive(const aActive: Boolean);         
+  begin
+    if Assigned(Self.fOwner) then begin
+      Self.fActive := aActive;
+      Self.fLastTrigger := Self.fOwner.fCurrentTime;
+      Self.CheckTrigger();
+    end else begin
+      Self.fActive := False;
+    end;
+
+    if Self.fActive = False then begin
+      Self.fNextTrigger := 0;
+      Self.fLastTrigger := 0;
+    end;
+  end;
+
+procedure TClockEvent.SetRepeating(const aRepeating: Boolean);      
+  begin
+    Self.fRepeating := aRepeating;
+  end;
+
+procedure TClockEvent.SetTriggerType(const aTriggerType: TTriggerType); 
+  begin
+    Self.fTriggerType := aTriggerType;
+    Self.CheckTrigger();
+  end;
+
+procedure TClockEvent.SetTriggerInterval(const aTriggerInterval: Double); 
+  begin
+    Self.fTriggerInterval := abs(aTriggerInterval);
+
+    if Self.fActive then begin
+      Self.fNextTrigger := Self.fLastTrigger + Self.fTriggerInterval;
+    end;
+  end;
+
+procedure TClockEvent.SetTriggerTime(const aTriggerTime: TTimeStruct);     
+  begin
+    Self.fTriggerTime := aTriggerTime;
+    Self.CheckTrigger();
+  end;
+
+procedure TClockEvent.SetOwner(const aOwner: TClock);     
+  begin
+
+    if aOwner = Self.fOwner then Exit;
+
+    if Assigned(aOwner) then begin
+      if Assigned(Self.fOwner) then begin
+      Self.fOwner.RemoveEvent(Self);
+      end;
+      Self.fOwner := aOwner;
+      Self.fOwner.AddEvent(Self);
+    end else begin
+      Self.fOwner := nil;
+      Self.Active := False;
+    end;
+
+  end;
+
+procedure TClockEvent.SetEventProc(const aEventProc: TEventProc);    
+  begin
+    Self.fEventProc := aEventProc;
+  end;
+
+function TClockEvent.GetTriggerInterval(): Double;    
+  begin
+    case Self.fTriggerType of
+      TRIGGER_ON_INTERVAL: Exit(Self.fTriggerInterval);
+      TRIGGER_ON_TIME: Exit(-1);
+    end;
+  end;
+
+function TClockEvent.GetTriggerTime(): TTimeStruct;      
+  begin
+    Initialize(Result);
+    case Self.fTriggerType of
+      TRIGGER_ON_INTERVAL: Exit;
+      TRIGGER_ON_TIME: Exit(Self.fTriggerTime);
+    end;
+  end;
+
+function TClockEvent.GetNextTrigger(): Double;
+  begin
+    case Self.fTriggerType of
+      TRIGGER_ON_INTERVAL: Exit(Self.fNextTrigger);
+      TRIGGER_ON_TIME: Exit(-1);
+    end;
   end;
 
 end.
