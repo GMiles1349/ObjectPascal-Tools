@@ -117,7 +117,7 @@ Cur: TListNode;
 
     Cur := Self.fHead;
     if Index > 0 then begin
-      for I := 1 to Index - 1 do begin
+      for I := 0 to Index - 1 do begin
         Cur := Cur.Next;
       end;
     end;
@@ -137,7 +137,7 @@ Cur: TListNode;
 
     Cur := Self.fHead;
     if Index > 0 then begin
-      for I := 1 to Index do begin
+      for I := 0 to Index - 1 do begin
         Cur := Cur.Next;
       end;
     end;
