@@ -59,7 +59,9 @@ type
 
 	    class operator Initialize(var aTimeStruct: TTimeStruct);
       class operator + (ts1, ts2: TTimeStruct): TTimeStruct;
+      class operator + (ts: TTimeStruct; sec: Double): TTimeStruct;
       class operator - (ts1, ts2: TTimeStruct): TTimeStruct;
+      class operator - (ts: TTimeStruct; sec: Double): TTimeStruct;
       class operator > (ts1, ts2: TTimeStruct): Boolean;
       class operator < (ts1, ts2: TTimeStruct): Boolean;
       class operator >= (ts1, ts2: TTimeStruct): Boolean;
@@ -276,6 +278,17 @@ class operator TTimeStruct.+ (ts1, ts2: TTimeStruct): TTimeStruct;
     Result.Hour := ts1.fHour + ts2.fHour;
   end;
 
+class operator TTimeStruct.+ (ts: TTimeStruct; sec: Double): TTimeStruct;
+var
+S: UINT32;
+S100: UINT32;
+  begin
+    S := trunc(sec);
+    S100 := trunc((sec - S) * 100);
+    Result := ts;
+    Result.Second := Result.fSecond + S;
+    Result.Second100 := Result.fSecond100 + S100;
+  end;
 
 class operator TTimeStruct.- (ts1, ts2: TTimeStruct): TTimeStruct;
   begin
@@ -284,6 +297,18 @@ class operator TTimeStruct.- (ts1, ts2: TTimeStruct): TTimeStruct;
     Result.Second := ts1.fSecond - ts2.fSecond;
     Result.Minute := ts1.fMinute - ts2.fMinute;
     Result.Hour := ts1.fHour - ts2.fHour;
+  end;
+
+class operator TTimeStruct.- (ts: TTimeStruct; sec: Double): TTimeStruct;
+var
+S: UINT32;
+S100: UINT32;
+  begin
+    S := trunc(sec);
+    S100 := trunc((sec - S) * 100);
+    Result := ts;
+    Result.Second := Result.fSecond - S;
+    Result.Second100 := Result.fSecond100 - S100;
   end;
 
 class operator TTimeStruct.> (ts1, ts2: TTimeStruct): Boolean;
@@ -582,7 +607,7 @@ procedure TClockEvent.CheckTrigger();
 
       TRIGGER_ON_TIME:
         begin
-          if Self.fTriggerTime > Self.fOwner.HMS then Self.fActive := False;
+          if Self.fTriggerTime < Self.fOwner.PollHMSTime then Self.fActive := False;
         end;
 
     end;
