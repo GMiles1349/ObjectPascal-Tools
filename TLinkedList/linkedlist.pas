@@ -42,6 +42,7 @@ type
       constructor Create();
       destructor Destroy(); override;
 
+      procedure Clear();
       procedure Push(const aValue: T); overload;
       procedure Push(const aValues: Array of T); overload;
       procedure Pop(); overload;
@@ -76,34 +77,35 @@ constructor TLinkedList.Create();
   end;
 
 destructor TLinkedList.Destroy();
+  begin
+    Self.Clear();
+    inherited;
+  end;
+
+
+procedure TLinkedList.Clear();
 var
-NodeArray: Array of TListNode;
-I: UINT32;
 Cur: TListNode;
+Next: TListNode;
   begin
 
-    if Self.fCount <> 0 then begin
+    if Self.fCount = 0 then Exit;
 
-      // create a list of all nodes and free
-	    Cur := Self.fHead;
-      Initialize(NodeArray);
-	    SetLength(NodeArray, Self.fCount);
-	    for I := 0 to High(NodeArray) do begin
-	      NodeArray[I] := Cur;
-        Cur := Cur.Next;
-	    end;
+    Cur := Self.fHead;
+    Next := Cur.Next;
 
-      Self.fHead := nil;
-      Self.fTail := nil;
-      Self.fCount := 0;
-
-      for I := 0 to High(NodeArray) do begin
-        NodeArray[i].Free();
+    while Assigned(Cur) do begin
+      FreeAndNil(Cur);
+      if Assigned(Next) then begin
+        Cur := Next;
+        Next := Cur.Next;
       end;
-
     end;
 
-    inherited;
+    Self.fHead := nil;
+    Self.fTail := nil;
+    Self.fCount := 0;
+
   end;
 
 
