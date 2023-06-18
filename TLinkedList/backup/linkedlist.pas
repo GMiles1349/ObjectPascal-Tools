@@ -8,6 +8,8 @@ unit LinkedList;
   {$MACRO ON}
 {$endif}
 
+// test comment
+
 interface
 
 uses
