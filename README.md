@@ -7,3 +7,6 @@ TVecArray
 
 TClock
 - A class that aides in querying CPU and real (hour, minute, second) time, as well as measuring spans of time and executing events.
+
+TLinkedList
+- A simple generic doubly-linked list.
