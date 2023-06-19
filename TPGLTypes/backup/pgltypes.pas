@@ -1,7 +1,11 @@
 unit pgltypes;
 
-{$mode ObjFPC}{$H+}
-{$modeswitch ADVANCEDRECORDS}
+{$ifdef FPC}
+  {$mode OBJFPC}{$H+}
+  {$modeswitch ADVANCEDRECORDS}
+{$endif}
+
+{$DEFINE PGL_RGB}
 
 interface
 
@@ -13,6 +17,8 @@ type
   TPGLAnchors = (ANCHOR_CENTER = 0, ANCHOR_LEFT = 1, ANCHOR_TOP = 2, ANCHOR_RIGHT = 3, ANCHOR_BOTTOM = 4);
 
 	{ TPGLColorI }
+
+  {$ALIGN 4}
 
 	PPGLColorI = ^TPGLColorI;
 	TPGLColorI = record
@@ -34,8 +40,32 @@ type
 	    property B: Byte read fB write SetB;
 	    property A: Byte read fA write SetA;
 
-	    class operator Initialize(var Color: TPGLColorI);
-	end;
+      // different operator definitions for FPC and Delpi
+      {$ifdef FPC}
+		    class operator Initialize(var Color: TPGLColorI);
+	      class operator := (Color: DWORD): TPGLColorI;
+	      class operator := (Values: Array of Integer): TPGLColorI;
+				class operator +  (ColorA,ColorB: TPGLColorI): TPGLColorI;
+				class operator +  (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+				class operator -  (ColorA,ColorB: TPGLColorI): TPGLColorI;
+				class operator -  (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+				class operator *  (ColorI: TPGLColorI; Value: Single): TPGLColorI;
+				class operator /  (ColorI: TPGLColorI; Value: Single): TPGLColorI;
+				class operator =  (ColorA, ColorB: TPGLColorI): Boolean;
+      {$else}
+        class operator Initialize(out Color: TPGLColorI);
+	      class operator Implicit(Color: DWORD): TPGLColorI;
+	      class operator Implicit(Values: Array of Integer): TPGLColorI;
+				class operator Add(ColorA,ColorB: TPGLColorI): TPGLColorI;
+				class operator Add(ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+				class operator Subtract(ColorA,ColorB: TPGLColorI): TPGLColorI;
+				class operator Subtract(ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+				class operator Multiply(ColorI: TPGLColorI; Value: Single): TPGLColorI;
+				class operator Divide(ColorI: TPGLColorI; Value: Single): TPGLColorI;
+				class operator Equal(ColorA, ColorB: TPGLColorI): Boolean;
+      {$endif}
+
+  end;
 
 	{ TPGLColorF }
 
@@ -53,8 +83,30 @@ type
 	    property B: Single read fB write SetB;
 	    property A: Single read fA write SetA;
 
-	    class operator Initialize(var Color: TPGLColorF);
-	end;
+      {$ifdef FPC}
+		    class operator Initialize(var Color: TPGLColorF);
+	      class operator := (Color: DWORD): TPGLColorF;
+				class operator := (Values: Array of Single): TPGLColorF;
+				class operator +  (ColorA,ColorB: TPGLColorF): TPGLColorF;
+				class operator +  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator -  (ColorA,ColorB: TPGLColorF): TPGLColorF;
+				class operator -  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator *  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator /  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator =  (ColorA, ColorB: TPGLColorF): Boolean;
+      {$else}
+	      class operator Initialize(out Color: TPGLColorF);
+	      class operator Implicit(Color: DWORD): TPGLColorF;
+				class operator Implicit(Values: Array of Single): TPGLColorF;
+				class operator Add(ColorA,ColorB: TPGLColorF): TPGLColorF;
+				class operator Add(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator Subtract(ColorA,ColorB: TPGLColorF): TPGLColorF;
+				class operator Subtract(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator Multiply(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator Divide(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+				class operator Equal(ColorA, ColorB: TPGLColorF): Boolean;
+      {$endif}
+  end;
 
 	{ TPGLVec2 }
 
@@ -62,8 +114,17 @@ type
 	  public
 	  	X,Y: Single;
 
-	  	class operator Initialize(var Vec: TPGLVec2);
-	end;
+      {$ifdef FPC}
+	  	  class operator Initialize(var Vec: TPGLVec2);
+        class operator := (const aValues: Array of Single): TPGLVec2;
+        class operator := (const aValues: Array of Integer): TPGLVec2;
+      {$else}
+        class operator Initialize(out Vec: TPGLVec2);
+        class operator Implicit(const aValues: Array of Single): TPGLVec2;
+        class operator Implicit(const aValues: Array of Integer): TPGLVec2;
+      {$endif}
+
+  end;
 
 	{ TPGLVec3 }
 
@@ -71,7 +132,15 @@ type
 	  public
 	  	X,Y,Z: Single;
 
-	  	class operator Initialize(var Vec: TPGLVec3);
+      {$ifdef FPC}
+				class operator Initialize(var Vec: TPGLVec3);
+				class operator := (Values: Array of Single): TPGLVec3;
+				class operator := (Values: Array of Integer): TPGLVec3;
+      {$else}
+        class operator Initialize(out Vec: TPGLVec3);
+				class operator Implicit(Values: Array of Single): TPGLVec3;
+				class operator Implicit(Values: Array of Integer): TPGLVec3;
+      {$endif}
 	end;
 
 	{ TPGLVec4 }
@@ -80,7 +149,15 @@ type
 		public
 	  	X,Y,Z,W: Single;
 
-	  	class operator Initialize(var Vec: TPGLVec4);
+      {$ifdef FPC}
+				class operator Initialize(var Vec: TPGLVec4);
+				class operator := (Values: Array of Single): TPGLVec4;
+				class operator := (Values: Array of Integer): TPGLVec4;
+      {$else}
+				class operator Initialize(out Vec: TPGLVec4);
+				class operator Implicit(Values: Array of Single): TPGLVec4;
+				class operator Implicit(Values: Array of Integer): TPGLVec4;
+      {$endif}
 	end;
 
 	{ TPGLRectI }
@@ -132,6 +209,8 @@ type
 	    procedure SetAnchoredWidth(aWidth: Integer; aAnchor: TPGLAnchors = ANCHOR_CENTER);
 	    procedure SetAnchoredHeight(aHeight: Integer; aAnchor: TPGLAnchors = ANCHOR_CENTER);
 	    procedure SetAnchoredSize(aWidth,aHeight: Integer; aWidthAnchor: TPGLAnchors = ANCHOR_CENTER; aHeightAnchor: TPGLAnchors = ANCHOR_CENTER);
+      procedure Crop(aBounds: TPGLRectI);
+      procedure FitTo(aBounds: TPGLRectI);
 
 	end;
 
@@ -169,19 +248,65 @@ type
 
 	    constructor Create(aLeft, aTop, aRight, aBottom: Single);
 
+      procedure Crop(aBounds: TPGLRectF);
+      procedure FitTo(aBounds: TPGLRectF);
 	end;
 
 
+  TPGLColorIHelper = record helper for TPGLColorI
+  {$ifndef FPC}
+  	class operator Implicit(ColorF: TPGLColorF): TPGLColorI;
+    class operator Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+  {$endif}
+  end;
+
+
+  TPGLColorFHelper = record helper for TPGLColorF
+  {$ifndef FPC}
+    class operator Implicit(ColorI: TPGLColorI): TPGLColorF;
+    class operator Equal(ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+  {$endif}
+  end;
+
+
+  TPGLVec2Helper = record helper for TPGLVec2
+  {$ifndef FPC}
+    class operator Implicit(aVec3: TPGLVec3): TPGLVec2;
+    class operator Implicit(aVec4: TPGLVec4): TPGLVec2;
+  {$endif}
+  end;
+
+
+  TPGLVec3Helper = record helper for TPGLVec3
+  {$ifndef FPC}
+    class operator Implicit(aVec2: TPGLVec2): TPGLVec3;
+    class operator Implicit(aVec4: TPGLVec4): TPGLVec3;
+  {$endif}
+  end;
+
+
+  TPGLVec4Helper = record helper for TPGLVec4
+  {$ifndef FPC}
+    class operator Implicit(aVec2: TPGLVec2): TPGLVec4;
+    class operator Implicit(aVec3: TPGLVec3): TPGLVec4;
+  {$endif}
+  end;
+
+
   TPGLRectIHelper = record helper for TPGLRectI
-  	procedure Crop(aBounds: TPGLRectI);
-    procedure FitTo(aBounds: TPGLRectI);
+  {$ifndef FPC}
+    class operator Implicit(aRect: TPGLRectF): TPGLRectI;
+  {$endif}
   end;
 
 
   TPGLRectFHelper = record helper for TPGLRectF
-  	procedure Crop(aBounds: TPGLRectF);
-    procedure FitTo(aBounds: TPGLRectF);
+  {$ifndef FPC}
+    class operator Implicit(aRect: TPGLRectI): TPGLRectF;
+  {$endif}
   end;
+
+{$ALIGN 8}
 
 (*//////////////////////////////////////////////////////////////////////////////////)
                                      Operators
@@ -189,51 +314,33 @@ type
 
 {$REGION Operators}
 
-	{ Colors }
+	(* Operators Dependant on Other Types. Only for FFPC *)
 
+  {$ifdef FPC}
+
+   { Colors }
 	operator := (ColorF: TPGLColorF): TPGLColorI;
-  operator := (ColorI: TPGLColorI): TPGLColorF;
-  operator := (Color: DWORD): TPGLColorI;
-  operator := (Color: DWORD): TPGLColorF;
-  operator := (Values: Array of Integer): TPGLColorI;
-  operator := (Values: Array of Single): TPGLColorF;
-  operator +  (A,B: TPGLColorI): TPGLColorI;
-  operator +  (A,B: TPGLColorF): TPGLColorF;
-  operator +  (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
-  operator +  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-  operator -  (A,B: TPGLColorI): TPGLColorI;
-  operator -  (A,B: TPGLColorF): TPGLColorF;
-  operator -  (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
-  operator -  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-  operator *  (ColorI: TPGLColorI; Value: Single): TPGLColorI;
-  operator *  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-  operator /  (ColorI: TPGLColorI; Value: Single): TPGLColorI;
-  operator /  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-  operator =  (A, B: TPGLColorI): Boolean;
-  operator =  (A, B: TPGLColorF): Boolean;
   operator =  (ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+
+  operator := (ColorI: TPGLColorI): TPGLColorF;
   operator =  (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
 
-  { Vectors }
-  operator := (Values: Array of Single): TPGLVec2;
-  operator := (Values: Array of Integer): TPGLVec2;
+   { Vectors }
   operator := (aVec3: TPGLVec3): TPGLVec2;
   operator := (aVec4: TPGLVec4): TPGLVec2;
 
-  operator := (Values: Array of Single): TPGLVec3;
-  operator := (Values: Array of Integer): TPGLVec3;
   operator := (aVec2: TPGLVec2): TPGLVec3;
   operator := (aVec4: TPGLVec4): TPGLVec3;
 
-  operator := (Values: Array of Single): TPGLVec4;
-  operator := (Values: Array of Integer): TPGLVec4;
   operator := (aVec2: TPGLVec2): TPGLVec4;
   operator := (aVec3: TPGLVec3): TPGLVec4;
 
   { Rects }
-
   operator := (aRect: TPGLRectF): TPGLRectI;
+
   operator := (aRect: TPGLRectI): TPGLRectF;
+
+  {$endif}
 
 {$ENDREGION}
 
@@ -247,17 +354,17 @@ type
 	// colors
 	function ColorI(aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI; register;
 	function ColorF(aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF; register;
-	function Mix(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF; overload;
-	function Mix(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
-	function Mix(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
+	function MixF(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF; overload;
+	function MixI(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
+	function MixP(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
 	procedure AlphaBlend(const srccolor, dstcolor: PInteger); register; inline;
 
 	// rects
 	function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI; register;
-	function RectI(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI; register;
+	function RectIC(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI; register;
 	function RectIWH(aLeft, aTop, aWidth, aHeight: Integer): TPGLRectI; register;
 	function RectF(aLeft, aTop, aRight, aBottom: Single): TPGLRectF; register;
-	function RectF(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF; register;
+	function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF; register;
 	function RectFWH(aLeft, aTop, aWidth, aHeight: Single): TPGLRectF; register;
 
 
@@ -273,12 +380,148 @@ implementation
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
+{$ifdef FPC}
 class operator TPGLColorI.Initialize(var Color: TPGLColorI);
+{$else}
+class operator TPGLColorI.Initialize(out Color: TPGLColorI);
+{$endif}
 	begin
   	Color.R := 0;
     Color.G := 0;
     Color.B := 0;
     Color.A := 255;
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.:= (Color: DWORD): TPGLColorI;
+{$else}
+class operator TPGLColorI.Implicit(Color: DWORD): TPGLColorI;
+{$endif}
+var
+Ptr: PByte;
+	begin
+  	Ptr := @Color;
+    Result.R := ClampI(Ptr[2]);
+    Result.G := ClampI(Ptr[1]);
+    Result.B := ClampI(Ptr[0]);
+    Result.A := ClampI(Ptr[3]);
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.:= (Values: Array of Integer): TPGLColorI;
+{$else}
+class operator TPGLColorI.Implicit(Values: Array of Integer): TPGLColorI;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PByte;
+	begin
+    len := Length(Values);
+
+    if len = 0 then begin
+    	Result.fR := 0;
+      Result.fG := 0;
+      Result.fB := 0;
+      Result.fA := 255;
+      Exit;
+    end;
+
+    Ptr := @Result.R;
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := ClampI(Values[I]);
+    end;
+
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.+ (ColorA,ColorB: TPGLColorI): TPGLColorI;
+{$else}
+class operator TPGLColorI.Add(ColorA,ColorB: TPGLColorI): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(ColorA.R + ColorB.R);
+    Result.G := ClampI(ColorA.G + ColorB.G);
+    Result.B := ClampI(ColorA.B + ColorB.B);
+    Result.A := ClampI(ColorA.A + ColorB.A);
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.+ (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+{$else}
+class operator TPGLColorI.Add(ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(ColorI.R + Value);
+    Result.G := ClampI(ColorI.G + Value);
+    Result.B := ClampI(ColorI.B + Value);
+    Result.A := ClampI(ColorI.A + Value);
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.- (ColorA,ColorB: TPGLColorI): TPGLColorI;
+{$else}
+class operator TPGLColorI.Subtract(ColorA,ColorB: TPGLColorI): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(ColorA.R - ColorB.R);
+    Result.G := ClampI(ColorA.G - ColorB.G);
+    Result.B := ClampI(ColorA.B - ColorB.B);
+    Result.A := ClampI(ColorA.A - ColorB.A);
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.- (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+{$else}
+class operator TPGLColorI.Subtract(ColorI: TPGLColorI; Value: Integer): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(ColorI.R - Value);
+    Result.G := ClampI(ColorI.G - Value);
+    Result.B := ClampI(ColorI.B - Value);
+    Result.A := ClampI(ColorI.A - Value);
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.* (ColorI: TPGLColorI; Value: Single): TPGLColorI;
+{$else}
+class operator TPGLColorI.Multiply(ColorI: TPGLColorI; Value: Single): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(Trunc(ColorI.R * Value));
+    Result.G := ClampI(Trunc(ColorI.G * Value));
+    Result.B := ClampI(Trunc(ColorI.B * Value));
+    Result.A := ClampI(Trunc(ColorI.A * Value));
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI./ (ColorI: TPGLColorI; Value: Single): TPGLColorI;
+{$else}
+class operator TPGLColorI.Divide(ColorI: TPGLColorI; Value: Single): TPGLColorI;
+{$endif}
+	begin
+  	Result.R := ClampI(Trunc(ColorI.R / Value));
+    Result.G := ClampI(Trunc(ColorI.G / Value));
+    Result.B := ClampI(Trunc(ColorI.B / Value));
+    Result.A := ClampI(Trunc(ColorI.A / Value));
+  end;
+
+
+{$ifdef FPC}
+class operator TPGLColorI.=  (ColorA, ColorB: TPGLColorI): Boolean;
+{$else}
+class operator TPGLColorI.Equal(ColorA, ColorB: TPGLColorI): Boolean;
+{$endif}
+	begin
+  	Result := (ColorA.R = ColorB.R) and (ColorA.G = ColorB.G) and (ColorA.B = ColorB.B) and (ColorA.A = ColorB.A);
   end;
 
 procedure TPGLColorI.SetR(value:Byte);
@@ -307,14 +550,141 @@ procedure TPGLColorI.SetA(value:Byte);
                                       TPGLColorF
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
-
+{$ifdef FPC}
 class operator TPGLColorF.Initialize(var Color: TPGLColorF);
+{$else}
+class operator TPGLColorF.Initialize(out Color: TPGLColorF);
+{$endif}
 	begin
   	Color.R := 0;
     Color.G := 0;
     Color.B := 0;
     Color.A := 1;
   end;
+
+{$ifdef FPC}
+class operator TPGLColorF.:= (Color: DWORD): TPGLColorF;
+{$else}
+class operator TPGLColorF.Implicit(Color: DWORD): TPGLColorF;
+{$endif}
+var
+Ptr: PByte;
+	begin
+  	Ptr := @Color;
+    Result.R := ClampF(Ptr[2] / 255);
+    Result.G := ClampF(Ptr[1] / 255);
+    Result.B := ClampF(Ptr[0] / 255);
+    Result.A := ClampF(Ptr[3] / 255);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.:= (Values: Array of Single): TPGLColorF;
+{$else}
+class operator TPGLColorF.Implicit(Values: Array of Single): TPGLColorF;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+    len := Length(Values);
+
+    if len = 0 then begin
+    	Result.fR := 0;
+      Result.fG := 0;
+      Result.fB := 0;
+      Result.fA := 1;
+      Exit;
+    end;
+
+    Ptr := @Result.R;
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := ClampF(Values[I]);
+    end;
+
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.+ (ColorA,ColorB: TPGLColorF): TPGLColorF;
+{$else}
+class operator TPGLColorF.Add(ColorA,ColorB: TPGLColorF): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorA.R + ColorB.R);
+    Result.G := ClampF(ColorA.G + ColorB.G);
+    Result.B := ClampF(ColorA.B + ColorB.B);
+    Result.A := ClampF(ColorA.A + ColorB.A);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.+ (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$else}
+class operator TPGLColorF.Add(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorF.R + Value);
+    Result.G := ClampF(ColorF.G + Value);
+    Result.B := ClampF(ColorF.B + Value);
+    Result.A := ClampF(ColorF.A + Value);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.- (ColorA,ColorB: TPGLColorF): TPGLColorF;
+{$else}
+class operator TPGLColorF.Subtract(ColorA,ColorB: TPGLColorF): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorA.R - ColorB.R);
+    Result.G := ClampF(ColorA.G - ColorB.G);
+    Result.B := ClampF(ColorA.B - ColorB.B);
+    Result.A := ClampF(ColorA.A - ColorB.A);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.- (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$else}
+class operator TPGLColorF.Subtract(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorF.R - Value);
+    Result.G := ClampF(ColorF.G - Value);
+    Result.B := ClampF(ColorF.B - Value);
+    Result.A := ClampF(ColorF.A - Value);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.* (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$else}
+class operator TPGLColorF.Multiply(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorF.R * Value);
+    Result.G := ClampF(ColorF.G * Value);
+    Result.B := ClampF(ColorF.B * Value);
+    Result.A := ClampF(ColorF.A * Value);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF./ (ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$else}
+class operator TPGLColorF.Divide(ColorF: TPGLColorF; Value: Single): TPGLColorF;
+{$endif}
+	begin
+  	Result.R := ClampF(ColorF.R / Value);
+    Result.G := ClampF(ColorF.G / Value);
+    Result.B := ClampF(ColorF.B / Value);
+    Result.A := ClampF(ColorF.A / Value);
+  end;
+
+{$ifdef FPC}
+class operator TPGLColorF.=  (ColorA, ColorB: TPGLColorF): Boolean;
+{$else}
+class operator TPGLColorF.Equal(ColorA, ColorB: TPGLColorF): Boolean;
+{$endif}
+	begin
+  	Result := (ColorA.R = ColorB.R) and (ColorA.G = ColorB.G) and (ColorA.B = ColorB.B) and (ColorA.A = ColorB.A);
+  end;
+
 
 procedure TPGLColorF.SetR(value:Single);
 	begin
@@ -343,10 +713,66 @@ procedure TPGLColorF.SetA(value:Single);
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
+{$ifdef FPC}
 class operator TPGLVec2.Initialize(var Vec: TPGLVec2);
+{$else}
+class operator TPGLVec2.Initialize(out Vec: TPGLVec2);
+{$endif}
 	begin
   	Vec.X := 0;
     Vec.Y := 0;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec2.:=(const aValues: Array of Single): TPGLVec2;
+{$else}
+class operator TPGLVec2.Implicit(const aValues: Array of Single): TPGLVec2;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(aValues);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Exit;
+    end;
+
+    if len > 2 then len := 2;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := aValues[I];
+    end;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec2.:=(const aValues: Array of Integer): TPGLVec2;
+{$else}
+class operator TPGLVec2.Implicit(const aValues: Array of Integer): TPGLVec2;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(aValues);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Exit;
+    end;
+
+    if len > 2 then len := 2;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := Single(aValues[I]);
+    end;
   end;
 
 
@@ -356,11 +782,69 @@ class operator TPGLVec2.Initialize(var Vec: TPGLVec2);
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
+{$ifdef FPC}
 class operator TPGLVec3.Initialize(var Vec: TPGLVec3);
+{$else}
+class operator TPGLVec3.Initialize(out Vec: TPGLVec3);
+{$endif}
 	begin
   	Vec.X := 0;
     Vec.Y := 0;
     Vec.Z := 0;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec3.:= (Values: Array of Single): TPGLVec3;
+{$else}
+class operator TPGLVec3.Implicit(Values: Array of Single): TPGLVec3;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(Values);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Result.Z := 0;
+      Exit;
+    end;
+
+    if len > 3 then len := 3;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := Values[I];
+    end;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec3.:= (Values: Array of Integer): TPGLVec3;
+{$else}
+class operator TPGLVec3.Implicit(Values: Array of Integer): TPGLVec3;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(Values);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Result.Z := 0;
+      Exit;
+    end;
+
+    if len > 3 then len := 3;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := Single(Values[I]);
+    end;
   end;
 
 (*///////////////////////////////////////////////////////////////////////////////////////)
@@ -369,12 +853,72 @@ class operator TPGLVec3.Initialize(var Vec: TPGLVec3);
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
+{$ifdef FPC}
 class operator TPGLVec4.Initialize(var Vec: TPGLVec4);
+{$else}
+class operator TPGLVec4.Initialize(out Vec: TPGLVec4);
+{$endif}
 	begin
   	Vec.X := 0;
     Vec.Y := 0;
     Vec.Z := 0;
     Vec.W := 0;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec4.:= (Values: Array of Single): TPGLVec4;
+{$else}
+class operator TPGLVec4.Implicit(Values: Array of Single): TPGLVec4;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(Values);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Result.Z := 0;
+      Result.W := 0;
+      Exit;
+    end;
+
+    if len > 4 then len := 4;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := Values[I];
+    end;
+  end;
+
+{$ifdef FPC}
+class operator TPGLVec4.:= (Values: Array of Integer): TPGLVec4;
+{$else}
+class operator TPGLVec4.Implicit(Values: Array of Integer): TPGLVec4;
+{$endif}
+var
+len: Integer;
+I: Integer;
+Ptr: PSingle;
+	begin
+  	len := Length(Values);
+    if len = 0 then begin
+    	Result.X := 0;
+      Result.Y := 0;
+      Result.Z := 0;
+      Result.W := 0;
+      Exit;
+    end;
+
+    if len > 4 then len := 4;
+
+    Ptr := @Result;
+
+    for I := 0 to len - 1 do begin
+    	Ptr[I] := Single(Values[I]);
+    end;
   end;
 
 (*///////////////////////////////////////////////////////////////////////////////////////)
@@ -608,7 +1152,7 @@ procedure TPGLRectI.SetAnchoredSize(aWidth,aHeight: Integer; aWidthAnchor: TPGLA
   end;
 
 
-procedure TPGLRectIHelper.Crop(aBounds: TPGLRectI);
+procedure TPGLRectI.Crop(aBounds: TPGLRectI);
 var
 NewLeft, NewRight, NewTop, NewBottom: Integer;
 	begin
@@ -626,7 +1170,7 @@ NewLeft, NewRight, NewTop, NewBottom: Integer;
   end;
 
 
-procedure TPGLRectIHelper.FitTo(aBounds: TPGLRectI);
+procedure TPGLRectI.FitTo(aBounds: TPGLRectI);
 var
 Success: Boolean;
 WidthPer, HeightPer: Single;
@@ -797,7 +1341,7 @@ procedure TPGLRectF.SetSize(values: TPGLVec2);
     SetHeight(values.y);
   end;
 
-procedure TPGLRectFHelper.Crop(aBounds: TPGLRectF);
+procedure TPGLRectF.Crop(aBounds: TPGLRectF);
 var
 NewLeft, NewRight, NewTop, NewBottom: Single;
 	begin
@@ -814,7 +1358,7 @@ NewLeft, NewRight, NewTop, NewBottom: Single;
     Self := TPGLRectF.Create(NewLeft, NewTop, NewRight, NewBottom);
   end;
 
-procedure TPGLRectFHelper.FitTo(aBounds: TPGLRectF);
+procedure TPGLRectF.FitTo(aBounds: TPGLRectF);
 var
 WR, HR: Single;
 NewWidth, NewHeight: Single;
@@ -844,7 +1388,11 @@ NewWidth, NewHeight: Single;
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
+{$ifdef FPC}
 operator := (ColorF: TPGLColorF): TPGLColorI;
+{$else}
+class operator TPGLColorFHelper.Implicit(ColorF: TPGLColorF): TPGLColorI;
+{$endif}
 	begin
   	Result.R := ClampI(trunc(ColorF.R * 255));
     Result.G := ClampI(trunc(ColorF.G * 255));
@@ -852,7 +1400,11 @@ operator := (ColorF: TPGLColorF): TPGLColorI;
     Result.A := ClampI(trunc(ColorF.A * 255));
   end;
 
+{$ifdef FPC}
 operator := (ColorI: TPGLColorI): TPGLColorF;
+{$else}
+class operator TPGLCOlorI.Implicit(ColorI: TPGLColorI): TPGLColorF;
+{$endif}
 	begin
   	Result.R := ClampF(ColorI.R / 255);
     Result.G := ClampF(ColorI.G / 255);
@@ -860,302 +1412,64 @@ operator := (ColorI: TPGLColorI): TPGLColorF;
     Result.A := ClampF(ColorI.A / 255);
   end;
 
-operator := (Color: DWORD): TPGLColorI;
-var
-Ptr: PByte;
-	begin
-  	Ptr := @Color;
-    Result.R := ClampI(Ptr[2]);
-    Result.G := ClampI(Ptr[1]);
-    Result.B := ClampI(Ptr[0]);
-    Result.A := ClampI(Ptr[3]);
-  end;
-
-operator := (Color: DWORD): TPGLColorF;
-var
-Ptr: PByte;
-	begin
-  	Ptr := @Color;
-    Result.R := ClampF(Ptr[2] / 255);
-    Result.G := ClampF(Ptr[1] / 255);
-    Result.B := ClampF(Ptr[0] / 255);
-    Result.A := ClampF(Ptr[3] / 255);
-  end;
-
-operator := (Values: Array of Integer): TPGLColorI;
-var
-len: Integer;
-I: Integer;
-Ptr: PByte;
-	begin
-    len := Length(Values);
-
-    if len = 0 then begin
-    	Result.fR := 0;
-      Result.fG := 0;
-      Result.fB := 0;
-      Result.fA := 255;
-      Exit;
-    end;
-
-    Ptr := @Result.R;
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := ClampI(Values[I]);
-    end;
-
-  end;
-
-operator := (Values: Array of Single): TPGLColorF;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-    len := Length(Values);
-
-    if len = 0 then begin
-    	Result.fR := 0;
-      Result.fG := 0;
-      Result.fB := 0;
-      Result.fA := 1;
-      Exit;
-    end;
-
-    Ptr := @Result.R;
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := ClampF(Values[I]);
-    end;
-
-  end;
-
-operator + (A,B: TPGLColorI): TPGLColorI;
-	begin
-  	Result.R := ClampI(A.R + B.R);
-    Result.G := ClampI(A.G + B.G);
-    Result.B := ClampI(A.B + B.B);
-    Result.A := ClampI(A.A + B.A);
-  end;
-
-operator + (A,B: TPGLColorF): TPGLColorF;
-	begin
-  	Result.R := ClampF(A.R + B.R);
-    Result.G := ClampF(A.G + B.G);
-    Result.B := ClampF(A.B + B.B);
-    Result.A := ClampF(A.A + B.A);
-  end;
-
-operator + (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
-	begin
-  	Result.R := ClampI(ColorI.R + Value);
-    Result.G := ClampI(ColorI.G + Value);
-    Result.B := ClampI(ColorI.B + Value);
-    Result.A := ClampI(ColorI.A + Value);
-  end;
-
-operator + (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-	begin
-  	Result.R := ClampF(ColorF.R + Value);
-    Result.G := ClampF(ColorF.G + Value);
-    Result.B := ClampF(ColorF.B + Value);
-    Result.A := ClampF(ColorF.A + Value);
-  end;
-
-operator - (A,B: TPGLColorI): TPGLColorI;
-	begin
-  	Result.R := ClampI(A.R - B.R);
-    Result.G := ClampI(A.G - B.G);
-    Result.B := ClampI(A.B - B.B);
-    Result.A := ClampI(A.A - B.A);
-  end;
-
-operator - (A,B: TPGLColorF): TPGLColorF;
-	begin
-  	Result.R := ClampF(A.R - B.R);
-    Result.G := ClampF(A.G - B.G);
-    Result.B := ClampF(A.B - B.B);
-    Result.A := ClampF(A.A - B.A);
-  end;
-
-operator - (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
-	begin
-  	Result.R := ClampI(ColorI.R - Value);
-    Result.G := ClampI(ColorI.G - Value);
-    Result.B := ClampI(ColorI.B - Value);
-    Result.A := ClampI(ColorI.A - Value);
-  end;
-
-operator - (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-	begin
-  	Result.R := ClampF(ColorF.R - Value);
-    Result.G := ClampF(ColorF.G - Value);
-    Result.B := ClampF(ColorF.B - Value);
-    Result.A := ClampF(ColorF.A - Value);
-  end;
-
-operator * (ColorI: TPGLColorI; Value: Single): TPGLColorI;
-	begin
-  	Result.R := ClampI(Trunc(ColorI.R * Value));
-    Result.G := ClampI(Trunc(ColorI.G * Value));
-    Result.B := ClampI(Trunc(ColorI.B * Value));
-    Result.A := ClampI(Trunc(ColorI.A * Value));
-  end;
-
-operator * (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-	begin
-  	Result.R := ClampF(ColorF.R * Value);
-    Result.G := ClampF(ColorF.G * Value);
-    Result.B := ClampF(ColorF.B * Value);
-    Result.A := ClampF(ColorF.A * Value);
-  end;
-
-operator / (ColorI: TPGLColorI; Value: Single): TPGLColorI;
-	begin
-  	Result.R := ClampI(Trunc(ColorI.R / Value));
-    Result.G := ClampI(Trunc(ColorI.G / Value));
-    Result.B := ClampI(Trunc(ColorI.B / Value));
-    Result.A := ClampI(Trunc(ColorI.A / Value));
-  end;
-
-operator / (ColorF: TPGLColorF; Value: Single): TPGLColorF;
-	begin
-  	Result.R := ClampF(ColorF.R / Value);
-    Result.G := ClampF(ColorF.G / Value);
-    Result.B := ClampF(ColorF.B / Value);
-    Result.A := ClampF(ColorF.A / Value);
-  end;
-
-operator =  (A, B: TPGLColorI): Boolean;
-	begin
-  	Result := (A.R = B.R) and (A.G = B.G) and (A.B = B.B) and (A.A = B.A);
-  end;
-
-operator =  (A, B: TPGLColorF): Boolean;
-	begin
-  	Result := (A.R = B.R) and (A.G = B.G) and (A.B = B.B) and (A.A = B.A);
-  end;
-
-operator =  (ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+{$ifdef FPC}
+operator = (ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+{$else}
+class operator TPGLColorI.Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+{$endif}
 	begin
   	Result := (ColorI.R = trunc(ColorF.R * 255)) and (ColorI.G = trunc(ColorF.G * 255))
     and (ColorI.B = trunc(ColorF.B * 255)) and (ColorI.A = trunc(ColorF.A * 255));
   end;
 
-operator =  (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+{$ifdef FPC}
+operator = (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+{$else}
+class operator TPGLColorF.Equal(ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+{$endif}
 	begin
   	Result := (trunc(ColorF.R * 255) = ColorI.R) and (trunc(ColorF.G * 255) = ColorI.G)
     and (trunc(ColorF.B * 255) = ColorI.B) and (trunc(ColorF.A * 255) = ColorI.A);
   end;
 
-{ Vectors}
+{$ifdef FPC}
 
-operator := (Values: Array of Single): TPGLVec2;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Exit;
-    end;
+{$else}
 
-    if len > 2 then len := 2;
-
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Values[I];
-    end;
-  end;
-
-operator := (Values: Array of Integer): TPGLVec2;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Exit;
-    end;
-
-    if len > 2 then len := 2;
-
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Single(Values[I]);
-    end;
-  end;
-
+{$endif}
 operator := (aVec3: TPGLVec3): TPGLVec2;
 	begin
   	Result.X := aVec3.X;
     Result.Y := aVec3.Y;
   end;
 
+{$ifdef FPC}
+
+{$else}
+
+{$endif}
 operator := (aVec4: TPGLVec4): TPGLVec2;
 	begin
   	Result.X := aVec4.X;
     Result.Y := aVec4.Y;
   end;
 
-operator := (Values: Array of Single): TPGLVec3;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Result.Z := 0;
-      Exit;
-    end;
+{$ifdef FPC}
 
-    if len > 3 then len := 3;
+{$else}
 
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Values[I];
-    end;
-  end;
-
-operator := (Values: Array of Integer): TPGLVec3;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Result.Z := 0;
-      Exit;
-    end;
-
-    if len > 3 then len := 3;
-
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Single(Values[I]);
-    end;
-  end;
-
+{$endif}
 operator := (aVec2: TPGLVec2): TPGLVec3;
 	begin
   	Result.X := aVec2.X;
     Result.Y := aVec2.Y;
   end;
 
+{$ifdef FPC}
+
+{$else}
+
+{$endif}
 operator := (aVec4: TPGLVec4): TPGLVec3;
 	begin
   	Result.X := aVec4.X;
@@ -1163,60 +1477,22 @@ operator := (aVec4: TPGLVec4): TPGLVec3;
     Result.Z := aVec4.Z;
   end;
 
-operator := (Values: Array of Single): TPGLVec4;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Result.Z := 0;
-      Result.W := 0;
-      Exit;
-    end;
+{$ifdef FPC}
 
-    if len > 4 then len := 4;
+{$else}
 
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Values[I];
-    end;
-  end;
-
-operator := (Values: Array of Integer): TPGLVec4;
-var
-len: Integer;
-I: Integer;
-Ptr: PSingle;
-	begin
-  	len := Length(Values);
-    if len = 0 then begin
-    	Result.X := 0;
-      Result.Y := 0;
-      Result.Z := 0;
-      Result.W := 0;
-      Exit;
-    end;
-
-    if len > 4 then len := 4;
-
-    Ptr := @Result;
-
-    for I := 0 to len - 1 do begin
-    	Ptr[I] := Single(Values[I]);
-    end;
-  end;
-
+{$endif}
 operator := (aVec2: TPGLVec2): TPGLVec4;
 	begin
   	Result.X := aVec2.X;
     Result.Y := aVec2.Y;
   end;
 
+{$ifdef FPC}
+
+{$else}
+
+{$endif}
 operator := (aVec3: TPGLVec3): TPGLVec4;
 	begin
   	Result.X := aVec3.X;
@@ -1224,11 +1500,21 @@ operator := (aVec3: TPGLVec3): TPGLVec4;
     Result.Z := aVec3.Z;
   end;
 
+{$ifdef FPC}
+
+{$else}
+
+{$endif}
 operator := (aRect: TPGLRectF): TPGLRectI;
 	begin
   	Result := TPGLRectI.Create(trunc(aRect.Left), trunc(aRect.Top), trunc(aRect.Right), trunc(aRect.Bottom));
   end;
 
+{$ifdef FPC}
+
+{$else}
+
+{$endif}
 operator := (aRect: TPGLRectI): TPGLRectF;
 	begin
   	Result := TPGLRectF.Create(aRect.Left, aRect.Top, aRect.Right, aRect.Bottom);
@@ -1282,7 +1568,7 @@ function ColorF(aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF;
     Result.fA := ClampF(aAlpha)
   end;
 
-function Mix(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF;
+function MixF(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF;
 var
 SF, DF: Single;
 	begin
@@ -1294,7 +1580,7 @@ SF, DF: Single;
     Result.fA := 1;
   end;
 
-function Mix(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI;
+function MixI(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI;
 var
 SF, DF: Single;
 	begin
@@ -1306,7 +1592,7 @@ SF, DF: Single;
     Result.fA := 255;
   end;
 
-function Mix(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI;
+function MixP(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI;
 var
 SF, DF: Single;
 	begin
@@ -1336,7 +1622,7 @@ function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI;
   	Result := TPGLRectI.Create(aLeft, aTop, aRight, aBottom);
   end;
 
-function RectI(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
+function RectIC(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
 	begin
   	Result.fX := trunc(aCenter.X);
     Result.fY := trunc(aCenter.Y);
@@ -1358,7 +1644,7 @@ function RectF(aLeft, aTop, aRight, aBottom: Single): TPGLRectF;
   	Result := TPGLRectF.Create(aLeft, aTop, aRight, aBottom);
   end;
 
-function RectF(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
+function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
 	begin
   	Result.fX := (aCenter.X);
     Result.fY := (aCenter.Y);
