@@ -607,7 +607,7 @@ procedure TClockEvent.CheckTrigger();
 
       TRIGGER_ON_TIME:
         begin
-          if Self.fTriggerTime < Self.fOwner.HMS then Self.fActive := False;
+          if Self.fTriggerTime < Self.fOwner.PollHMSTime then Self.fActive := False;
         end;
 
     end;

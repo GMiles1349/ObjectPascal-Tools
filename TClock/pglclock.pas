@@ -1,4 +1,4 @@
-unit UnitClock;
+unit pglclock;
 
 {$ifdef FPC}
   {$mode ObjFPC}{$H+}
@@ -20,15 +20,15 @@ uses
 
 type
 
-  TEventProc = procedure();
-  TTriggerType = (TRIGGER_ON_INTERVAL = 0, TRIGGER_ON_TIME = 1);
+  TPGLEventProc = procedure();
+  TPGLTriggerType = (TRIGGER_ON_INTERVAL = 0, TRIGGER_ON_TIME = 1);
 
   TClockHour = INT32;
   TClockMinute = INT32;
   TClockSecond = INT32;
   TClockSecond100 = INT32;
 
-  TClock = class;
+  TPGLClock = class;
   TClockEvent = class;
 
   TTimeStruct = record
@@ -71,7 +71,7 @@ type
   end;
 
 
-  TClock = class(TPersistent)
+  TPGLClock = class(TPersistent)
   	private
     	fRunning: Boolean;
       fInterval: Double;
@@ -140,21 +140,21 @@ type
     private
       fActive: Boolean;
       fRepeating: Boolean;
-      fTriggerType: TTriggerType;
+      fTriggerType: TPGLTriggerType;
       fTriggerInterval: Double;
       fLastTrigger: Double;
       fNextTrigger: Double;
       fTriggerTime: TTimeStruct;
-      fOwner: TClock;
-      fEventProc: TEventProc;
+      fOwner: TPGLClock;
+      fEventProc: TPGLEventProc;
 
       procedure SetActive(const aActive: Boolean); inline;
       procedure SetRepeating(const aRepeating: Boolean); inline;
-      procedure SetTriggerType(const aTriggerType: TTriggerType); inline;
+      procedure SetTriggerType(const aTriggerType: TPGLTriggerType); inline;
       procedure SetTriggerInterval(const aTriggerInterval: Double); inline;
       procedure SetTriggerTime(const aTriggerTime: TTimeStruct); inline;
-      procedure SetOwner(const aOwner: TClock); inline;
-      procedure SetEventProc(const aEventProc: TEventProc); inline;
+      procedure SetOwner(const aOwner: TPGLClock); inline;
+      procedure SetEventProc(const aEventProc: TPGLEventProc); inline;
 
       function GetTriggerInterval(): Double; inline;
       function GetTriggerTime(): TTimeStruct; inline;
@@ -166,15 +166,15 @@ type
     public
       property Active: Boolean read fActive write SetActive;
       property Repeating: Boolean read fRepeating write SetRepeating;
-      property TriggerType: TTriggerType read fTriggerType write SetTriggerType;
+      property TriggerType: TPGLTriggerType read fTriggerType write SetTriggerType;
       property TriggerInterval: Double read GetTriggerInterval write SetTriggerInterval;
       property NextTrigger: Double read GetNextTrigger;
       property TriggerTime: TTimeStruct read GetTriggerTime write SetTriggerTime;
-      property Owner: TClock read fOwner write SetOwner;
-      property EventProc: TEventProc read fEventProc write SetEventProc;
+      property Owner: TPGLClock read fOwner write SetOwner;
+      property EventProc: TPGLEventProc read fEventProc write SetEventProc;
 
       constructor Create(); overload;
-      constructor Create(aOwner: TClock; aTriggerType: TTriggerType; aRepeating: Boolean); overload;
+      constructor Create(aOwner: TPGLClock; aTriggerType: TPGLTriggerType; aRepeating: Boolean); overload;
       destructor Destroy(); override;
 
   end;
@@ -343,18 +343,18 @@ class operator TTimeStruct.<> (ts1, ts2: TTimeStruct): Boolean;
 
 (*///////////////////////////////////////////////////////////////////////////////////////)
 (----------------------------------------------------------------------------------------)
-                                      TClock
+                                      TPGLClock
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
-constructor TClock.Create(AInterval: Double);
+constructor TPGLClock.Create(AInterval: Double);
 	begin
   	Self.fInterval := AInterval;
     Self.GetResolution();
     Self.Init();
   end;
 
-destructor TClock.Destroy();
+destructor TPGLClock.Destroy();
   begin
     while Length(Self.fEvents) > 0 do begin
       Self.RemoveEvent(Self.fEvents[0]);
@@ -363,7 +363,7 @@ destructor TClock.Destroy();
     inherited;
   end;
 
-procedure TClock.Init();
+procedure TPGLClock.Init();
 	begin
   	Self.fRunning := False;
     Self.fCurrentTime := 0;
@@ -376,14 +376,14 @@ procedure TClock.Init();
     Self.fFrameTime := 0;
   end;
 
-function TClock.GetResolution(): Int64;
+function TPGLClock.GetResolution(): Int64;
 	begin
   	clock_getres(CLOCK_MONOTONIC, @Self.TP);
     Self.fResolution := Self.TP.tv_nsec;
     Result := Self.fResolution;
   end;
 
-function TClock.GetTime(): Double;
+function TPGLClock.GetTime(): Double;
 var
 Th, Tm, Ts, Ts100: WORD;
 	begin
@@ -397,20 +397,20 @@ Th, Tm, Ts, Ts100: WORD;
     Result := Self.TP.tv_sec + (Self.TP.tv_nsec * 1e-9);
 	end;
 
-function TClock.GetEvent(Index: UINT32): TClockEvent;
+function TPGLClock.GetEvent(Index: UINT32): TClockEvent;
   begin
     if Index > High(Self.fEvents) then Exit(nil);
     Exit(Self.fEvents[Index]);
   end;
 
-function TClock.EventList(): specialize TArray<TClockEvent>;
+function TPGLClock.EventList(): specialize TArray<TClockEvent>;
   begin
     Initialize(Result);
     SetLength(Result, Length(Self.fEvents));
     Move(Self.fEvents[0], Result[0], SizeOf(Result[0]) * Length(Self.fEvents));
   end;
 
-procedure TClock.Update();
+procedure TPGLClock.Update();
 	begin
   	Self.fLastTime := Self.fCurrentTime;
     Self.fCurrentTime := Self.GetTime();
@@ -430,7 +430,7 @@ procedure TClock.Update();
     Self.HandleEvents();
   end;
 
-procedure TClock.SetInterval(const aInterval: Double);
+procedure TPGLClock.SetInterval(const aInterval: Double);
   begin
     Self.fInterval := abs(aInterval);
     if Self.fRunning then begin
@@ -438,7 +438,7 @@ procedure TClock.SetInterval(const aInterval: Double);
     end;
   end;
 
-procedure TClock.Start();
+procedure TPGLClock.Start();
 	begin
   	Self.Init();
     Self.fCurrentTime := Self.GetTime();
@@ -449,12 +449,12 @@ procedure TClock.Start();
     SElf.fRunning := True;
   end;
 
-procedure TClock.Stop();
+procedure TPGLClock.Stop();
 	begin
   	Self.fRunning := False;
   end;
 
-procedure TClock.Wait();
+procedure TPGLClock.Wait();
 	begin
   	while (Self.GetTime() < Self.fTargetTime) do begin
     end;
@@ -462,13 +462,13 @@ procedure TClock.Wait();
     Self.Update();
   end;
 
-function TClock.PollCPUTime(): Double;
+function TPGLClock.PollCPUTime(): Double;
   begin
     clock_gettime(CLOCK_MONOTONIC, @Self.TP);
     Result := Self.TP.tv_sec + (Self.TP.tv_nsec * 1e-9);
   end;
 
-function TClock.PollHMSTime(): TTimeStruct;
+function TPGLClock.PollHMSTime(): TTimeStruct;
 var
 Th, Tm, Ts, Ts100: WORD;
   begin
@@ -480,7 +480,7 @@ Th, Tm, Ts, Ts100: WORD;
     Result := TimeStruct(th, Tm, Ts, Ts100);
   end;
 
-function TClock.CPUTimeToHMS(const aCPUTime: Double): TTimeStruct;
+function TPGLClock.CPUTimeToHMS(const aCPUTime: Double): TTimeStruct;
 var
 Secs, Secs100: INT32;
   begin
@@ -489,7 +489,7 @@ Secs, Secs100: INT32;
     Result := Self.fInitHMS + TimeStruct(0, 0, Secs, Secs100);
   end;
 
-function TClock.HMStoCPUTime(const aHMS: TTimeStruct): Double;
+function TPGLClock.HMStoCPUTime(const aHMS: TTimeStruct): Double;
 var
 Secs: Double;
 TS: TTimeStruct;
@@ -502,7 +502,7 @@ TS: TTimeStruct;
     Result := Self.fInitTime + Secs;
   end;
 
-procedure TClock.AddEvent(const aEvent: TClockEvent);
+procedure TPGLClock.AddEvent(const aEvent: TClockEvent);
 var
 I: Integer;
   begin
@@ -518,7 +518,7 @@ I: Integer;
 
   end;
 
-procedure TClock.RemoveEvent(const aEvent: TClockEvent);
+procedure TPGLClock.RemoveEvent(const aEvent: TClockEvent);
 var
 I: Integer;
   begin
@@ -532,7 +532,7 @@ I: Integer;
 
   end;
 
-procedure TClock.HandleEvents();
+procedure TPGLClock.HandleEvents();
 var
 I: Integer;
   begin
@@ -574,7 +574,7 @@ constructor TClockEvent.Create();
     Self.fNextTrigger := 0;
   end;
 
-constructor TClockEvent.Create(aOwner: TClock; aTriggerType: TTriggerType; aRepeating: Boolean);
+constructor TClockEvent.Create(aOwner: TPGLClock; aTriggerType: TPGLTriggerType; aRepeating: Boolean);
   begin
     Self.Owner := aOwner;
     Self.fRepeating := aRepeating;
@@ -668,7 +668,7 @@ procedure TClockEvent.SetRepeating(const aRepeating: Boolean);
     Self.fRepeating := aRepeating;
   end;
 
-procedure TClockEvent.SetTriggerType(const aTriggerType: TTriggerType); 
+procedure TClockEvent.SetTriggerType(const aTriggerType: TPGLTriggerType); 
   begin
     Self.fTriggerType := aTriggerType;
     Self.CheckTrigger();
@@ -689,7 +689,7 @@ procedure TClockEvent.SetTriggerTime(const aTriggerTime: TTimeStruct);
     Self.CheckTrigger();
   end;
 
-procedure TClockEvent.SetOwner(const aOwner: TClock);     
+procedure TClockEvent.SetOwner(const aOwner: TPGLClock);     
   begin
 
     if aOwner = Self.fOwner then Exit;
@@ -707,7 +707,7 @@ procedure TClockEvent.SetOwner(const aOwner: TClock);
 
   end;
 
-procedure TClockEvent.SetEventProc(const aEventProc: TEventProc);    
+procedure TClockEvent.SetEventProc(const aEventProc: TPGLEventProc);    
   begin
     Self.fEventProc := aEventProc;
   end;

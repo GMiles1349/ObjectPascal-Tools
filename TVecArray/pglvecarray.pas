@@ -1,4 +1,4 @@
-unit VecArray;
+unit pglvecarray;
 
 {$INCLUDE vecarray.inc}
 
@@ -25,8 +25,8 @@ uses
 
 type
 
-	generic TVecArray<T> = record
-    type TTypePointer =^T;
+	generic TPGLVecArray<T> = record
+    type TPGLTypePointer =^T;
   	private
     	fTypeSize: UINT32;
     	fSize: UINT32;
@@ -37,7 +37,7 @@ type
     	fElements: array of T;
 
     	function GetElement(const Index: UINT32): T; RELEASE_INLINE
-      function GetElementData(const Index: UINT32): TTypePointer; RELEASE_INLINE
+      function GetElementData(const Index: UINT32): TPGLTypePointer; RELEASE_INLINE
       function GetData(): Pointer; RELEASE_INLINE
       function GetEmpty(): Boolean; RELEASE_INLINE
 
@@ -48,7 +48,7 @@ type
     public
     	property Data: Pointer read GetData;
       property Element[Index: UINT32]: T read GetElement write SetElement;
-      property ElementData[Index: UINT32]: TTypePointer read GetElementData;
+      property ElementData[Index: UINT32]: TPGLTypePointer read GetElementData;
     	property TypeSize: UINT32 read fTypeSize;
       property Size: UINT32 read fSize;
     	property MaxSize: UINT32 read fCapacity;
@@ -80,25 +80,25 @@ type
       procedure Reverse();
       procedure CopyToBuffer(var aBuffer: Pointer);
       procedure CopyToArray(var Arr: specialize TArray<T>);
-      procedure CopyToVecArray(var Arr: TVecArray);
-      procedure Combine(var Arr: TVecArray); overload;
+      procedure CopyToVecArray(var Arr: TPGLVecArray);
+      procedure Combine(var Arr: TPGLVecArray); overload;
       procedure Combine(var Arr: specialize TArray<T>); overload;
-      procedure OverWrite(var Arr: TVecArray; aIndex: UINT32); overload;
+      procedure OverWrite(var Arr: TPGLVecArray; aIndex: UINT32); overload;
       procedure OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32); overload;
 
       function FindFirst(const Value: T): INT32;
       function FindLast(const Value: T): INT32;
       function FindAll(const Value: T): specialize TArray<UINT32>;
 
-      class operator Initialize(var Dest: TVecArray);
-      class operator = (Arr1,Arr2: TVecArray): Boolean;
+      class operator Initialize(var Dest: TPGLVecArray);
+      class operator = (Arr1,Arr2: TPGLVecArray): Boolean;
 
   end;
 
 
 implementation
 
-class operator TVecArray.Initialize(var Dest: TVecArray);
+class operator TPGLVecArray.Initialize(var Dest: TPGLVecArray);
 	begin
   	Dest.fTypeSize := SizeOf(T);
     Dest.fSize := 0;
@@ -110,13 +110,13 @@ class operator TVecArray.Initialize(var Dest: TVecArray);
   end;
 
 
-class operator TVecArray.= (Arr1,Arr2: TVecArray): Boolean;
+class operator TPGLVecArray.= (Arr1,Arr2: TPGLVecArray): Boolean;
   begin
 
   end;
 
 
-constructor TVecArray.Create(const aCapacity: UINT32);
+constructor TPGLVecArray.Create(const aCapacity: UINT32);
 	begin
     Self.fHigh := -1;
     Self.fSize := 0;
@@ -127,7 +127,7 @@ constructor TVecArray.Create(const aCapacity: UINT32);
   end;
 
 
-function TVecArray.GetElement(const Index: UINT32): T;
+function TPGLVecArray.GetElement(const Index: UINT32): T;
 	begin
     {$IFDEF ENABLE_BOUNDS_CHECKING}
     if Index > fHigh then begin
@@ -140,7 +140,7 @@ function TVecArray.GetElement(const Index: UINT32): T;
   end;
 
 
-function TVecArray.GetElementData(const IndeX: UINT32): TTypePointer;
+function TPGLVecArray.GetElementData(const IndeX: UINT32): TPGLTypePointer;
   begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKNIG}
     if Index > fHigh then begin
@@ -150,20 +150,20 @@ function TVecArray.GetElementData(const IndeX: UINT32): TTypePointer;
     Exit(@Self.fElements[Index]);
   end;
 
-function TVecArray.GetData(): Pointer;
+function TPGLVecArray.GetData(): Pointer;
 	begin
     if Self.fSize = 0 then Exit(nil);
   	Exit(@Self.fElements[0]);
   end;
 
 
-function TVecArray.GetEmpty(): Boolean;
+function TPGLVecArray.GetEmpty(): Boolean;
 	begin
   	Exit(Self.fSize = 0);
   end;
 
 
-procedure TVecArray.UpdateLength(const aLength: UINT32);
+procedure TPGLVecArray.UpdateLength(const aLength: UINT32);
 	begin
   	Self.fSize := aLength;
     if Self.fSize <> 0 then begin
@@ -182,7 +182,7 @@ procedure TVecArray.UpdateLength(const aLength: UINT32);
   end;
 
 
-procedure TVecArray.SetElement(const Index: UINT32; const Value: T);
+procedure TPGLVecArray.SetElement(const Index: UINT32; const Value: T);
 	begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKING}
     	if Index > Self.fHigh then Exit;
@@ -191,13 +191,13 @@ procedure TVecArray.SetElement(const Index: UINT32; const Value: T);
   end;
 
 
-procedure TVecArray.Resize(const aLength: UINT32);
+procedure TPGLVecArray.Resize(const aLength: UINT32);
 	begin
   	Self.UpdateLength(aLength);
   end;
 
 
-procedure TVecArray.TrimBack(const aCount: UINT32);
+procedure TPGLVecArray.TrimBack(const aCount: UINT32);
 var
 TrueCount: UINT32;
 	begin
@@ -208,7 +208,7 @@ TrueCount: UINT32;
   end;
 
 
-procedure TVecArray.TrimFront(const aCount: UINT32);
+procedure TPGLVecArray.TrimFront(const aCount: UINT32);
 // remove aCount elements from the front of the array
 // move all other elements up by aCount and resize to new length
 	begin
@@ -225,7 +225,7 @@ procedure TVecArray.TrimFront(const aCount: UINT32);
   end;
 
 
-procedure TVecArray.TrimRange(const aStartIndex, aEndIndex: UINT32);
+procedure TPGLVecArray.TrimRange(const aStartIndex, aEndIndex: UINT32);
 var
 S, E: UINT32;
 MoveSize: UINT32;
@@ -262,7 +262,7 @@ TrimLen: UINT32;
   end;
 
 
-procedure TVecArray.ShrinkToSize();     
+procedure TPGLVecArray.ShrinkToSize();     
 	begin
   	SetLength(Self.fElements, Self.fSize);
     Self.fCapacity := Self.fSize;
@@ -272,7 +272,7 @@ procedure TVecArray.ShrinkToSize();
   end;
 
 
-procedure TVecArray.Reserve(const aLength: UINT32);
+procedure TPGLVecArray.Reserve(const aLength: UINT32);
 	begin
   	if aLength > Self.fCapacity then begin
     	Self.fCapacity := aLength;
@@ -282,14 +282,14 @@ procedure TVecArray.Reserve(const aLength: UINT32);
   end;
 
 
-procedure TVecArray.PushBack(const Value: T);
+procedure TPGLVecArray.PushBack(const Value: T);
 	begin
   	Self.UpdateLength(Self.fSize + 1);
     Self.fElements[Self.fHigh] := Value;
   end;
 
 
-procedure TVecArray.PushBack(const Values: Array of T);
+procedure TPGLVecArray.PushBack(const Values: Array of T);
 var
 Len: UINT32;
 Place: UINT32;
@@ -301,7 +301,7 @@ Place: UINT32;
   end;
 
 
-procedure TVecArray.PushFront(const Value: T);
+procedure TPGLVecArray.PushFront(const Value: T);
 var
 MoveSize: UINT32;
 	begin
@@ -313,7 +313,7 @@ MoveSize: UINT32;
   end;
 
 
-procedure TVecArray.PushFront(const Values: Array of T);
+procedure TPGLVecArray.PushFront(const Values: Array of T);
 var
 Len: UINT32;
 MoveSize: UINT32;
@@ -326,14 +326,14 @@ MoveSize: UINT32;
   end;
 
 
-procedure TVecArray.PopBack();
+procedure TPGLVecArray.PopBack();
 	begin
     if fSize = 0 then Exit;
   	Self.UpdateLength(Self.fSize - 1);
   end;
 
 
-procedure TVecArray.PopFront();
+procedure TPGLVecArray.PopFront();
 	begin
     if fSize = 0 then Exit;
   	Move(Self.fElements[1], Self.fElements[0], Self.fMemUsed - Self.fTypeSize);
@@ -341,7 +341,7 @@ procedure TVecArray.PopFront();
   end;
 
 
-procedure TVecArray.Insert(const aIndex: UINT32; const Value: array of T);
+procedure TPGLVecArray.Insert(const aIndex: UINT32; const Value: array of T);
 var
 MoveSize: UINT32;
 Len: UINT32;
@@ -367,7 +367,7 @@ Len: UINT32;
   end;
 
 
-procedure TVecArray.Delete(const Index: UINT32);
+procedure TPGLVecArray.Delete(const Index: UINT32);
 var
 MoveSize: UINT32;
 	begin
@@ -382,7 +382,7 @@ MoveSize: UINT32;
   end;
 
 
-procedure TVecArray.FindDeleteFirst(const Value: T);
+procedure TPGLVecArray.FindDeleteFirst(const Value: T);
 var
 I: UINT32;
 	begin
@@ -396,7 +396,7 @@ I: UINT32;
   end;
 
 
-procedure TVecArray.FindDeleteLast(const Value: T);
+procedure TPGLVecArray.FindDeleteLast(const Value: T);
 var
 I: Integer;
 	begin
@@ -411,7 +411,7 @@ I: Integer;
   end;
 
 
-procedure TVecArray.FindDeleteAll(const Value: T);
+procedure TPGLVecArray.FindDeleteAll(const Value: T);
 var
 I: INT32;
 	begin
@@ -426,7 +426,7 @@ I: INT32;
   end;
 
 
-procedure TVecArray.Swap(aIndex1, aIndex2: UINT32);
+procedure TPGLVecArray.Swap(aIndex1, aIndex2: UINT32);
 var
 Temp: T;
 	begin
@@ -443,7 +443,7 @@ Temp: T;
   end;
 
 
-procedure TVecArray.Reverse();
+procedure TPGLVecArray.Reverse();
 var
 I,R: UINT32;
 Limit: UINT32;
@@ -459,21 +459,21 @@ Limit: UINT32;
   end;
 
 
-procedure TVecArray.CopyToBuffer(var aBuffer: Pointer);
+procedure TPGLVecArray.CopyToBuffer(var aBuffer: Pointer);
 	begin
   	aBuffer := GetMemory(Self.MemoryUsed);
     Move(Self.fElements[0], aBuffer^, Self.fMemUsed);
   end;
 
 
-procedure TVecArray.CopyToArray(var Arr: specialize TArray<T>);
+procedure TPGLVecArray.CopyToArray(var Arr: specialize TArray<T>);
 	begin
   	SetLength(Arr, Self.Size);
     Move(Self.fElements[0], Arr[0], Self.fMemUsed);
   end;
 
 
-procedure TVecArray.CopyToVecArray(var Arr: TVecArray);
+procedure TPGLVecArray.CopyToVecArray(var Arr: TPGLVecArray);
 	begin
   	Arr.Resize(Self.Size);
     Arr.ShrinkToSize();
@@ -481,7 +481,7 @@ procedure TVecArray.CopyToVecArray(var Arr: TVecArray);
   end;
 
 
-procedure TVecArray.Combine(var Arr: TVecArray);
+procedure TPGLVecArray.Combine(var Arr: TPGLVecArray);
 var
 Place: UINT32;
   begin
@@ -491,7 +491,7 @@ Place: UINT32;
   end;
 
 
-procedure TVecArray.Combine(var Arr: specialize TArray<T>);
+procedure TPGLVecArray.Combine(var Arr: specialize TArray<T>);
 var
 Place: UINT32;
 Len: UINT32;
@@ -503,7 +503,7 @@ Len: UINT32;
   end;
 
 
-procedure TVecArray.OverWrite(var Arr: TVecArray; aIndex: UINT32);
+procedure TPGLVecArray.OverWrite(var Arr: TPGLVecArray; aIndex: UINT32);
 var
 NewSize: UINT32;
   begin
@@ -513,7 +513,7 @@ NewSize: UINT32;
   end;
 
 
-procedure TVecArray.OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32);
+procedure TPGLVecArray.OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32);
 var
 NewSize: UINT32;
 Len: UINT32;
@@ -525,7 +525,7 @@ Len: UINT32;
   end;
 
 
-function TVecArray.FindFirst(const Value: T): INT32;
+function TPGLVecArray.FindFirst(const Value: T): INT32;
 var
 I: UINT32;
 	begin
@@ -536,7 +536,7 @@ I: UINT32;
   end;
 
 
-function TVecArray.FindLast(const Value: T): INT32;
+function TPGLVecArray.FindLast(const Value: T): INT32;
 var
 I: INT32;
 	begin
@@ -548,7 +548,7 @@ I: INT32;
   end;
 
 
-function TVecArray.FindAll(const Value: T): specialize TArray<UINT32>;
+function TPGLVecArray.FindAll(const Value: T): specialize TArray<UINT32>;
 var
 Ret: Array of UINT32;
 FoundCount: UINT32;

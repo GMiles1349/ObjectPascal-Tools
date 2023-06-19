@@ -1,4 +1,4 @@
-unit LinkedList;
+unit pgllinkedlist;
 
 {$ifdef FPC}
   {$mode ObjFPC}{$H+}

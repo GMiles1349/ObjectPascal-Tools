@@ -80,7 +80,7 @@ type
       procedure Reverse();
       procedure CopyToBuffer(var aBuffer: Pointer);
       procedure CopyToArray(var Arr: specialize TArray<T>);
-      procedure CopyToDynArray(var Arr: TVecArray);
+      procedure CopyToVecArray(var Arr: TVecArray);
       procedure Combine(var Arr: TVecArray); overload;
       procedure Combine(var Arr: specialize TArray<T>); overload;
       procedure OverWrite(var Arr: TVecArray; aIndex: UINT32); overload;
@@ -140,7 +140,7 @@ function TVecArray.GetElement(const Index: UINT32): T;
   end;
 
 
-function TVecArray.GetElementData(const IndeX: UINT32): TDynTypePointer;
+function TVecArray.GetElementData(const IndeX: UINT32): TTypePointer;
   begin
     {$IFDEF TPGLDYNARRAY_BOUNDS_CHECKNIG}
     if Index > fHigh then begin
@@ -473,7 +473,7 @@ procedure TVecArray.CopyToArray(var Arr: specialize TArray<T>);
   end;
 
 
-procedure TVecArray.CopyToDynArray(var Arr: TVecArray);
+procedure TVecArray.CopyToVecArray(var Arr: TVecArray);
 	begin
   	Arr.Resize(Self.Size);
     Arr.ShrinkToSize();
