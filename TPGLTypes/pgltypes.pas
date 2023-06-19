@@ -3,6 +3,8 @@ unit pgltypes;
 {$ifdef FPC}
   {$mode OBJFPC}{$H+}
   {$modeswitch ADVANCEDRECORDS}
+{$else}
+  {$POINTERMATH ON}
 {$endif}
 
 {$DEFINE PGL_RGB}
@@ -43,7 +45,7 @@ type
       // different operator definitions for FPC and Delpi
       {$ifdef FPC}
 		    class operator Initialize(var Color: TPGLColorI);
-	      class operator := (Color: DWORD): TPGLColorI;
+	      class operator := (Color: UINT32): TPGLColorI;
 	      class operator := (Values: Array of Integer): TPGLColorI;
 				class operator +  (ColorA,ColorB: TPGLColorI): TPGLColorI;
 				class operator +  (ColorI: TPGLColorI; Value: Integer): TPGLColorI;
@@ -54,7 +56,7 @@ type
 				class operator =  (ColorA, ColorB: TPGLColorI): Boolean;
       {$else}
         class operator Initialize(out Color: TPGLColorI);
-	      class operator Implicit(Color: DWORD): TPGLColorI;
+	      class operator Implicit(Color: UINT32): TPGLColorI;
 	      class operator Implicit(Values: Array of Integer): TPGLColorI;
 				class operator Add(ColorA,ColorB: TPGLColorI): TPGLColorI;
 				class operator Add(ColorI: TPGLColorI; Value: Integer): TPGLColorI;
@@ -85,7 +87,7 @@ type
 
       {$ifdef FPC}
 		    class operator Initialize(var Color: TPGLColorF);
-	      class operator := (Color: DWORD): TPGLColorF;
+	      class operator := (Color: UINT32): TPGLColorF;
 				class operator := (Values: Array of Single): TPGLColorF;
 				class operator +  (ColorA,ColorB: TPGLColorF): TPGLColorF;
 				class operator +  (ColorF: TPGLColorF; Value: Single): TPGLColorF;
@@ -96,7 +98,7 @@ type
 				class operator =  (ColorA, ColorB: TPGLColorF): Boolean;
       {$else}
 	      class operator Initialize(out Color: TPGLColorF);
-	      class operator Implicit(Color: DWORD): TPGLColorF;
+	      class operator Implicit(Color: UINT32): TPGLColorF;
 				class operator Implicit(Values: Array of Single): TPGLColorF;
 				class operator Add(ColorA,ColorB: TPGLColorF): TPGLColorF;
 				class operator Add(ColorF: TPGLColorF; Value: Single): TPGLColorF;
@@ -367,6 +369,11 @@ type
 	function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF; register;
 	function RectFWH(aLeft, aTop, aWidth, aHeight: Single): TPGLRectF; register;
 
+  // vectors
+  function Vec2(aX, aY: Single): TPGLVec2;
+  function Vec3(aX, aY, aZ: Single): TPGLVec3;
+  function Vec4(aX, aY, aZ, aW: Single): TPGLVec4;
+
 
 var
 	RedBlueComps: Integer;
@@ -394,9 +401,9 @@ class operator TPGLColorI.Initialize(out Color: TPGLColorI);
 
 
 {$ifdef FPC}
-class operator TPGLColorI.:= (Color: DWORD): TPGLColorI;
+class operator TPGLColorI.:= (Color: UINT32): TPGLColorI;
 {$else}
-class operator TPGLColorI.Implicit(Color: DWORD): TPGLColorI;
+class operator TPGLColorI.Implicit(Color: UINT32): TPGLColorI;
 {$endif}
 var
 Ptr: PByte;
@@ -563,9 +570,9 @@ class operator TPGLColorF.Initialize(out Color: TPGLColorF);
   end;
 
 {$ifdef FPC}
-class operator TPGLColorF.:= (Color: DWORD): TPGLColorF;
+class operator TPGLColorF.:= (Color: UINT32): TPGLColorF;
 {$else}
-class operator TPGLColorF.Implicit(Color: DWORD): TPGLColorF;
+class operator TPGLColorF.Implicit(Color: UINT32): TPGLColorF;
 {$endif}
 var
 Ptr: PByte;
@@ -977,8 +984,8 @@ Diff: Integer;
 	begin
   	Diff := fX - value;
     fX := Value;
-    fLeft += Diff;
-    fRight += Diff;
+    fLeft := fLeft + Diff;
+    fRight := fRight + Diff;
   end;
 
 procedure TPGLRectI.SetY(value: Integer);
@@ -987,8 +994,8 @@ Diff: Integer;
 	begin
   	Diff := fY - value;
     fY := Value;
-    fTop += Diff;
-    fBottom += Diff;
+    fTop := fTop + Diff;
+    fBottom := fTop + Diff;
   end;
 
 procedure TPGLRectI.SetCenter(value: TPGLVec2);
@@ -999,10 +1006,10 @@ DiffX, DiffY: Integer;
     DiffY := fY - trunc(value.Y);
     fX := trunc(value.X);
     fY := trunc(value.Y);
-    fLeft += DiffX;
-    fRight += DiffX;
-    fTop += DiffY;
-    fBottom += DiffY;
+    fLeft := fLeft + DiffX;
+    fRight := fRight + DiffX;
+    fTop := fTop + DiffY;
+    fBottom := fBottom + DiffY;
   end;
 
 procedure TPGLRectI.SetTopLeft(value: TPGLVec2);
@@ -1035,8 +1042,8 @@ Diff: Integer;
 	begin
   	Diff := fLeft - value;
     fLeft := value;
-    fX += Diff;
-    fRight += Diff;
+    fX := fX + Diff;
+    fRight := fRight + Diff;
   end;
 
 procedure TPGLRectI.SetRight(value: Integer);
@@ -1045,8 +1052,8 @@ Diff: Integer;
 	begin
   	Diff := fRight - value;
     fRight := value;
-    fX += Diff;
-    fLeft += Diff;
+    fX := fX + Diff;
+    fLeft := fLeft + Diff;
   end;
 
 procedure TPGLRectI.SetTop(value: Integer);
@@ -1055,8 +1062,8 @@ Diff: Integer;
 	begin
   	Diff := fTop - value;
     fTop := value;
-    fY += Diff;
-    fBottom += Diff;
+    fY := fY + Diff;
+    fBottom := fBottom + Diff;
   end;
 
 procedure TPGLRectI.SetBottom(value: Integer);
@@ -1065,8 +1072,8 @@ Diff: Integer;
 	begin
   	Diff := fBottom - value;
     fBottom := value;
-    fY += Diff;
-    fTop += Diff;
+    fY := fY + Diff;
+    fTop := fTop + Diff;
   end;
 
 procedure TPGLRectI.SetWidth(value: Integer);
@@ -1213,7 +1220,7 @@ NewWidth, NewHeight: Integer;
 
     until Success = True;
 
-    Self.SetSize([NewWidth,NewHeight]);
+    Self.SetSize(Vec2(NewWidth,NewHeight));
 
   end;
 
@@ -1253,8 +1260,8 @@ Diff: Single;
 	begin
   	Diff := fX - value;
     fX := Value;
-    fLeft += Diff;
-    fRight += Diff;
+    fLeft := fLeft + Diff;
+    fRight := fRight + Diff;
   end;
 
 procedure TPGLRectF.SetY(value: Single);
@@ -1263,8 +1270,8 @@ Diff: Single;
 	begin
   	Diff := fY - value;
     fY := Value;
-    fTop += Diff;
-    fBottom += Diff;
+    fTop := fTop + Diff;
+    fBottom := fBottom + Diff;
   end;
 
 procedure TPGLRectF.SetCenter(values: TPGLVec2);
@@ -1275,10 +1282,10 @@ DiffX, DiffY: Single;
     DiffY := fY - (values.Y);
     fX := (values.X);
     fY := (values.Y);
-    fLeft += DiffX;
-    fRight += DiffX;
-    fTop += DiffY;
-    fBottom += DiffY;
+    fLeft := fLeft + DiffX;
+    fRight := fRight + DiffX;
+    fTop := fTop + DiffY;
+    fBottom := fBottom + DiffY;
   end;
 
 procedure TPGLRectF.SetLeft(value: Single);
@@ -1287,8 +1294,8 @@ Diff: Single;
 	begin
   	Diff := fLeft - value;
     fLeft := value;
-    fX += Diff;
-    fRight += Diff;
+    fX := fX + Diff;
+    fRight := fRight + Diff;
   end;
 
 procedure TPGLRectF.SetRight(value: Single);
@@ -1297,8 +1304,8 @@ Diff: Single;
 	begin
   	Diff := fRight - value;
     fRight := value;
-    fX += Diff;
-    fLeft += Diff;
+    fX := fX + Diff;
+    fLeft := fLeft + Diff;
   end;
 
 procedure TPGLRectF.SetTop(value: Single);
@@ -1307,8 +1314,8 @@ Diff: Single;
 	begin
   	Diff := fTop - value;
     fTop := value;
-    fY += Diff;
-    fBottom += Diff;
+    fY := fY + Diff;
+    fBottom := fBottom + Diff;
   end;
 
 procedure TPGLRectF.SetBottom(value: Single);
@@ -1317,8 +1324,8 @@ Diff: Single;
 	begin
   	Diff := fBottom - value;
     fBottom := value;
-    fY += Diff;
-    fTop += Diff;
+    fY := fY + Diff;
+    fTop := fTop + Diff;
   end;
 
 procedure TPGLRectF.SetWidth(value: Single);
@@ -1369,12 +1376,12 @@ NewWidth, NewHeight: Single;
     	WR := Self.Width / aBounds.Width;
     	NewWidth := (Self.Width * (1/WR));
       NewHeight := (Self.Height * (1/WR));
-      Self.SetSize([NewWidth, NewHeight]);
+      Self.SetSize(Vec2(NewWidth, NewHeight));
 
       HR := Self.Height / aBounds.Height;
       NewHeight := (Self.Height * (1/HR));
       NewWidth := (Self.Width * (1/WR));
-      Self.SetSize([NewWidth, NewHeight]);
+      Self.SetSize(Vec2(NewWidth, NewHeight));
 
       if (NewWidth <= aBounds.Width) and (NewHeight <= aBounds.Height) then Break;
 
@@ -1391,7 +1398,7 @@ NewWidth, NewHeight: Single;
 {$ifdef FPC}
 operator := (ColorF: TPGLColorF): TPGLColorI;
 {$else}
-class operator TPGLColorFHelper.Implicit(ColorF: TPGLColorF): TPGLColorI;
+class operator TPGLColorIHelper.Implicit(ColorF: TPGLColorF): TPGLColorI;
 {$endif}
 	begin
   	Result.R := ClampI(trunc(ColorF.R * 255));
@@ -1403,7 +1410,7 @@ class operator TPGLColorFHelper.Implicit(ColorF: TPGLColorF): TPGLColorI;
 {$ifdef FPC}
 operator := (ColorI: TPGLColorI): TPGLColorF;
 {$else}
-class operator TPGLCOlorI.Implicit(ColorI: TPGLColorI): TPGLColorF;
+class operator TPGLColorFHelper.Implicit(ColorI: TPGLColorI): TPGLColorF;
 {$endif}
 	begin
   	Result.R := ClampF(ColorI.R / 255);
@@ -1415,7 +1422,7 @@ class operator TPGLCOlorI.Implicit(ColorI: TPGLColorI): TPGLColorF;
 {$ifdef FPC}
 operator = (ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
 {$else}
-class operator TPGLColorI.Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+class operator TPGLColorIHelper.Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
 {$endif}
 	begin
   	Result := (ColorI.R = trunc(ColorF.R * 255)) and (ColorI.G = trunc(ColorF.G * 255))
@@ -1425,7 +1432,7 @@ class operator TPGLColorI.Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean
 {$ifdef FPC}
 operator = (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
 {$else}
-class operator TPGLColorF.Equal(ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+class operator TPGLColorFHelper.Equal(ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
 {$endif}
 	begin
   	Result := (trunc(ColorF.R * 255) = ColorI.R) and (trunc(ColorF.G * 255) = ColorI.G)
@@ -1435,7 +1442,7 @@ class operator TPGLColorF.Equal(ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean
 {$ifdef FPC}
 operator := (aVec3: TPGLVec3): TPGLVec2;
 {$else}
-class operator TPGLVec2.Implicit(aVec3: TPGLVec3): TPGLVec2;
+class operator TPGLVec2Helper.Implicit(aVec3: TPGLVec3): TPGLVec2;
 {$endif}
 	begin
   	Result.X := aVec3.X;
@@ -1445,7 +1452,7 @@ class operator TPGLVec2.Implicit(aVec3: TPGLVec3): TPGLVec2;
 {$ifdef FPC}
 operator := (aVec4: TPGLVec4): TPGLVec2;
 {$else}
-class operator TPGLVec2.Implicit(aVec4: TPGLVec4): TPGLVec2;
+class operator TPGLVec2Helper.Implicit(aVec4: TPGLVec4): TPGLVec2;
 {$endif}
 	begin
   	Result.X := aVec4.X;
@@ -1455,7 +1462,7 @@ class operator TPGLVec2.Implicit(aVec4: TPGLVec4): TPGLVec2;
 {$ifdef FPC}
 operator := (aVec2: TPGLVec2): TPGLVec3;
 {$else}
-class operator TPGLVec3.Implicit(aVec2: TPGLVec2): TPGLVec3;
+class operator TPGLVec3Helper.Implicit(aVec2: TPGLVec2): TPGLVec3;
 {$endif}
 	begin
   	Result.X := aVec2.X;
@@ -1465,7 +1472,7 @@ class operator TPGLVec3.Implicit(aVec2: TPGLVec2): TPGLVec3;
 {$ifdef FPC}
 operator := (aVec4: TPGLVec4): TPGLVec3;
 {$else}
-class operator TPGLVec3.Implicit(aVec4: TPGLVec4): TPGLVec3;
+class operator TPGLVec3Helper.Implicit(aVec4: TPGLVec4): TPGLVec3;
 {$endif}
 	begin
   	Result.X := aVec4.X;
@@ -1476,7 +1483,7 @@ class operator TPGLVec3.Implicit(aVec4: TPGLVec4): TPGLVec3;
 {$ifdef FPC}
 operator := (aVec2: TPGLVec2): TPGLVec4;
 {$else}
-class operator TPGLVec4.Implicit(aVec2: TPGLVec2): TPGLVec4;
+class operator TPGLVec4Helper.Implicit(aVec2: TPGLVec2): TPGLVec4;
 {$endif}
 	begin
   	Result.X := aVec2.X;
@@ -1486,7 +1493,7 @@ class operator TPGLVec4.Implicit(aVec2: TPGLVec2): TPGLVec4;
 {$ifdef FPC}
 operator := (aVec3: TPGLVec3): TPGLVec4;
 {$else}
-class operator TPGLVec4.Implicit(aVec3: TPGLVec3): TPGLVec4;
+class operator TPGLVec4Helper.Implicit(aVec3: TPGLVec3): TPGLVec4;
 {$endif}
 	begin
   	Result.X := aVec3.X;
@@ -1497,7 +1504,7 @@ class operator TPGLVec4.Implicit(aVec3: TPGLVec3): TPGLVec4;
 {$ifdef FPC}
 operator := (aRect: TPGLRectF): TPGLRectI;
 {$else}
-class operator TPGLRectI.Implicit(aRect: TPGLRectF): TPGLRectI;
+class operator TPGLRectIHelper.Implicit(aRect: TPGLRectF): TPGLRectI;
 {$endif}
 	begin
   	Result := TPGLRectI.Create(trunc(aRect.Left), trunc(aRect.Top), trunc(aRect.Right), trunc(aRect.Bottom));
@@ -1506,7 +1513,7 @@ class operator TPGLRectI.Implicit(aRect: TPGLRectF): TPGLRectI;
 {$ifdef FPC}
 operator := (aRect: TPGLRectI): TPGLRectF;
 {$else}
-class operator TPGLRectF.Implicit(aRect: TPGLRectI): TPGLRectF;
+class operator TPGLRectFHelper.Implicit(aRect: TPGLRectI): TPGLRectF;
 {$endif}
 	begin
   	Result := TPGLRectF.Create(aRect.Left, aRect.Top, aRect.Right, aRect.Bottom);
@@ -1604,8 +1611,8 @@ Alpha: Byte;
 
 		RedBlueComps := srccolor^ and $ff00ff;
 		GreenComp := srccolor^ and $00ff00;
-		RedBlueComps += ((dstcolor^ and $ff00ff) - RedBlueComps) * Alpha shr 8;
-		GreenComp += ((dstcolor^ and $00ff00) - GreenComp) * Alpha shr 8;
+		RedBlueComps := RedBLueComps + ((dstcolor^ and $ff00ff) - RedBlueComps) * Alpha shr 8;
+		GreenComp := GreenComp + ((dstcolor^ and $00ff00) - GreenComp) * Alpha shr 8;
 		dstcolor^ := $ff000000 or (RedBlueComps and $ff00ff) or (GreenComp and $ff00);
 	end;
 
@@ -1653,7 +1660,25 @@ function RectFWH(aLeft, aTop, aWidth, aHeight: Single): TPGLRectF;
   	Result := TPGLRectF.Create(aLeft, aTop, aLeft + (aWidth - 1), aTop + (aHeight - 1))
   end;
 
+function Vec2(aX, aY: Single): TPGLVec2;
+  begin
+    Result.X := aX;
+    Result.Y := aY;
+  end;
 
+function Vec3(aX, aY, aZ: Single): TPGLVec3;
+  begin
+    Result.X := aX;
+    Result.Y := aY;
+    Result.Z := aZ;
+  end;
 
+function Vec4(aX, aY, aZ, aW: Single): TPGLVec4;
+  begin
+    Result.X := aX;
+    Result.Y := aY;
+    Result.Z := aZ;
+    Result.W := aW;
+  end;
 end.
 
