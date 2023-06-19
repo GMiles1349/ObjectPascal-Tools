@@ -20,6 +20,8 @@ Currently, when TPGLVecArray internally compares element and a value, an inline 
         end;
       end;   
 
+The first glaringly obvious problem with this is the case in which the size of the data type is not fixed, as in strings and arrays. This method of comparison is temporary. A better method will be implemented.
+
 ##
 ## Types
 **`TTypePointer = ^T`**
