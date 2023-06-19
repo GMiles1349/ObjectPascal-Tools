@@ -1,18 +1,30 @@
-<h3>TVecArray</h3>
+<h3>TPGLVecArray</h3>
 
-TVecArray is a generic container for dynamic arrays that mimics the behavior of the C++ std::vector class. TVecArray reserves attempts to reserve more memory than the user has explicitly asked for in order to avoid reallocation of memory when new elements are requested to be added to the array. When the user requests that elements be removed, TVecArray simply decrements it's Size property, reports the new Size, and restricts access elements passed [Size - 1] also in order to avoid unnecesarrily reallocating memory. The user can request that more memory be reserved, or that only the necessary amount of memory be allocated. 
+TPGLVecArray is a generic container for dynamic arrays that mimics the behavior of the C++ std::vector class. TPGLVecArray reserves attempts to reserve more memory than the user has explicitly asked for in order to avoid reallocation of memory when new elements are requested to be added to the array. When the user requests that elements be removed, TPGLVecArray simply decrements it's Size property, reports the new Size, and restricts access elements passed [Size - 1] also in order to avoid unnecesarrily reallocating memory. The user can request that more memory be reserved, or that only the necessary amount of memory be allocated. 
 
-Users can toggle optional bounds checking within TVecArray member functions by editting the 'pgldynarray.inc' file, which contains a compiler $DEFINE (if those CPU cycles eaten by conditionals really bother you). If bounds checking is not toggled, functions will not... check bounds... and as such will not return values indicating that an element index is invalid either because it is beyond useable range of elements or beyond the range of the actual array in memory.
+Users can toggle optional bounds checking within TPGLVecArray member functions by editting the 'pgldynarray.inc' file, which contains a compiler $DEFINE (if those CPU cycles eaten by conditionals really bother you). If bounds checking is not toggled, functions will not... check bounds... and as such will not return values indicating that an element index is invalid either because it is beyond useable range of elements or beyond the range of the actual array in memory.
 
 Additionally, the there is an option to enable RELEASE_INLINE, which is a macro dropped in place of 'inline', which will not inline functions in non-release builds.
 
-There is currently no support of nested/multi-dimensional TVecArrays. This is planned.
+There is currently no support of nested/multi-dimensional TPGLVecArrays. This is planned.
+
+Currently, when TPGLVecArray internally compares element and a value, an inline function `SameBytes` is called. `SameBytes` iterates over each byte of the element and the compared value and returns `False` if they are not equal. `SameBytes` returns true if the loop finishes. `SameBytes` is implimented as
+
+    function SameBytes(const Address1, Address2: PByte; aSize: UINT32): Boolean;
+    var
+    I: UINT32;
+      begin
+        Result := True;
+        for I := 0 to aSize - 1 do begin
+          if Address1[I] <> Address2[I] then Exit(False);
+        end;
+      end;   
 
 ##
 ## Types
 **`TTypePointer = ^T`**
-TTypePointer is a typed pointer of that type of the TVecArray.
-Ex. if TVecArray has a type of `Byte`, then TTypePointer is equivalent to `^Byte` or `PByte`.
+TTypePointer is a typed pointer of that type of the TPGLVecArray.
+Ex. if TPGLVecArray has a type of `Byte`, then TTypePointer is equivalent to `^Byte` or `PByte`.
 
 ##
 ## Properties
@@ -50,7 +62,7 @@ Returns `TRUE` if `SIZE` is 0.
 ## Constructors
 
 **`Create(const aCapacity: UINT32)`**<br>
-Creates a TVecArray with a `Capacity` of `aCapacity`;
+Creates a TPGLVecArray with a `Capacity` of `aCapacity`;
 
 ##
 ## Procedures
@@ -129,16 +141,16 @@ Performs a single copy of the array data up to index `High` to the memory addres
 **`CopyToArray(var Arr: specialize TArray<T>)`**<br>
 Performs a single copy of the array data up to index `High` to `Arr`. `Arr` is set to length `Size`.
 
-**`CopyToVecArray(var Arr: TVecArray)`**<br>
+**`CopyToVecArray(var Arr: TPGLVecArray)`**<br>
 Performs a single copy of the array data up to index `High` to the memory of `Arr`. `Arr`'s `Capacity` is set to `Size`.
 
-**`Combine(var Arr: TVecArray)`**<br>
+**`Combine(var Arr: TPGLVecArray)`**<br>
 Calls `Insert(Self.High, Arr.Data)`, appending `Arr`'s data to the end the array and incrementing `Size` by the `Arr.Size`. If the new `Size` would exceed `Capacity`, memory is reallocated at twice the size needed to store the number of useable elements. 
 
 **`Combine(var Arr: specialize TArray<T>)`**<br>
 Calls `Insert(Self.High, Arr)`, appending `Arr` to the end of the array and incrementing `Size` by the lenght of `Arr`. If the new `Size` would exceed `Capacity`, memory is reallocated at twice the size needed to store the numbef of useable elements.
 
-**`OverWrite(var Arr: TVecArray; aIndex: UINT32)`**<br>
+**`OverWrite(var Arr: TPGLVecArray; aIndex: UINT32)`**<br>
 
 
 **`OverWrite(var Arr: specialize TArray<T>; aIndex: UINT32)`**<br>
