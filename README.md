@@ -2,11 +2,19 @@ Collection of tools written in Object Pascal. All tools are intended to be useab
 
 Everything should be considered a work in progress.
 
-TVecArray
+
+
+TPGLVecArray
 - Similar to C++'s std::vector
 
-TClock
+TPGLClock
 - A class that aides in querying CPU and real (hour, minute, second) time, as well as measuring spans of time and executing events.
 
-TLinkedList
+TPGLLinkedList
 - A simple generic doubly-linked list.
+
+TPGLX11Window
+- A wrapper around X11 windowing and input. Not compatible with Windows builds.
+
+PGLTypes
+- Contains types to describe colors, vectors and rectangles.
