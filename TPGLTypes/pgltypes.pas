@@ -20,8 +20,6 @@ type
 
 	{ TPGLColorI }
 
-  {$ALIGN 4}
-
 	PPGLColorI = ^TPGLColorI;
 	TPGLColorI = record
 	  private
@@ -308,8 +306,6 @@ type
   {$endif}
   end;
 
-{$ALIGN 8}
-
 (*//////////////////////////////////////////////////////////////////////////////////)
                                      Operators
 (//////////////////////////////////////////////////////////////////////////////////*)
@@ -359,7 +355,7 @@ type
 	function MixF(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF; overload;
 	function MixI(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
 	function MixP(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
-	procedure AlphaBlend(const srccolor, dstcolor: PInteger); register; inline;
+	procedure AlphaBlend(const srccolor, dstcolor: Pointer); register; inline;
 
 	// rects
 	function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI; register;
@@ -376,8 +372,9 @@ type
 
 
 var
-	RedBlueComps: Integer;
-  GreenComp: Integer;
+	RedBlueComps: UINT32;
+  GreenComp: UINT32;
+  BlendDstPtr, BlendSrcPtr: PUINT32;
 
 implementation
 
@@ -1603,17 +1600,19 @@ SF, DF: Single;
     Result.fA := 255;
   end;
 
-procedure AlphaBlend(const srccolor, dstcolor: PInteger);
+procedure AlphaBlend(const srccolor, dstcolor: Pointer);
 var
 Alpha: Byte;
 	begin
-	  Alpha := 255 - (srccolor^ shr 24);
+    BlendDstPtr := PUINT32(dstcolor);
+    BlendSrcPtr := PUINT32(srccolor);
+	  Alpha := 255 - (BlendSrcPtr^ shr 24);
 
-		RedBlueComps := srccolor^ and $ff00ff;
-		GreenComp := srccolor^ and $00ff00;
-		RedBlueComps := RedBLueComps + ((dstcolor^ and $ff00ff) - RedBlueComps) * Alpha shr 8;
-		GreenComp := GreenComp + ((dstcolor^ and $00ff00) - GreenComp) * Alpha shr 8;
-		dstcolor^ := $ff000000 or (RedBlueComps and $ff00ff) or (GreenComp and $ff00);
+		RedBlueComps := BlendSrcPtr^ and $ff00ff;
+		GreenComp := BlendSrcPtr^ and $00ff00;
+		RedBlueComps := RedBLueComps + ((BlendDstPtr^ and $ff00ff) - RedBlueComps) * Alpha shr 8;
+		GreenComp := GreenComp + ((BlendDstPtr^ and $00ff00) - GreenComp) * Alpha shr 8;
+		BlendDstPtr^ := $ff000000 or (RedBlueComps and $ff00ff) or (GreenComp and $ff00);
 	end;
 
 function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI;

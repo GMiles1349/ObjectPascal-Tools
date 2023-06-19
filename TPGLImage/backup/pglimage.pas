@@ -462,7 +462,7 @@ OutColor: ^TPGLColorI;
 
 	      for I := Rect.Left to Rect.Right do begin
 
-	        Dist := Sqrt( IntPower((aCenter.X) - I, 2) + IntPower((aCenter.Y) - Z, 2));
+	        Dist := Sqrt( IntPower(trunc(aCenter.X) - I, 2) + IntPower(trunc(aCenter.Y) - Z, 2));
 
 	        if Dist <= aRadius then begin
             AlphaBlend(PUINT32(@aColor), PUINT32(@OutColor[Pos]));
@@ -483,7 +483,7 @@ OutColor: ^TPGLColorI;
 
       for I := Rect.Left to Rect.Right do begin
 
-        Dist := Sqrt( IntPower((aCenter.X) - I, 2) + IntPower((aCenter.Y) - Z, 2));
+        Dist := Sqrt( IntPower(trunc(aCenter.X) - I, 2) + IntPower(trunc(aCenter.Y) - Z, 2));
 
         if Dist <= aRadius then begin
         	OutColor[Pos] := aColor;
