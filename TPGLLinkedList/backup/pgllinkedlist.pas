@@ -15,12 +15,12 @@ uses
 
 type
 
-  generic TLinkedList<T> = class(TPersistent)
+  generic TPGLLinkedList<T> = class(TPersistent)
 
-    type TListNode = class
+    type TPGLListNode = class
       private
-	      Last: TListNode;
-	      Next: TListNode;
+	      Last: TPGLListNode;
+	      Next: TPGLListNode;
 	      Value: T;
 
       public
@@ -29,8 +29,8 @@ type
 
     private
       fCount: UINT32;
-      fHead: TListNode;
-      fTail: TListNode;
+      fHead: TPGLListNode;
+      fTail: TPGLListNode;
 
       function GetNodeValue(Index: UINT32): T;
       procedure SetNodeValue(Index: UINT32; aValue: T);
@@ -62,31 +62,31 @@ type
 
 implementation
 
-destructor TLinkedList.TListNode.Destroy();
+destructor TPGLLinkedList.TPGLListNode.Destroy();
   begin
     Self.Last := nil;
     Self.Next := nil;
     inherited;
   end;
 
-constructor TLinkedList.Create();
+constructor TPGLLinkedList.Create();
   begin
     Self.fCount := 0;
     Self.fHead := nil;
     Self.fTail := nil;
   end;
 
-destructor TLinkedList.Destroy();
+destructor TPGLLinkedList.Destroy();
   begin
     Self.Clear();
     inherited;
   end;
 
 
-procedure TLinkedList.Clear();
+procedure TPGLLinkedList.Clear();
 var
-Cur: TListNode;
-Next: TListNode;
+Cur: TPGLListNode;
+Next: TPGLListNode;
   begin
 
     if Self.fCount = 0 then Exit;
@@ -109,10 +109,10 @@ Next: TListNode;
   end;
 
 
-function TLinkedList.GetNodeValue(Index: UINT32): T;
+function TPGLLinkedList.GetNodeValue(Index: UINT32): T;
 var
 I: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Index > Self.fCount - 1 then Exit;
@@ -129,10 +129,10 @@ Cur: TListNode;
   end;
 
 
-procedure TLinkedList.SetNodeValue(Index: UINT32; aValue: T);
+procedure TPGLLinkedList.SetNodeValue(Index: UINT32; aValue: T);
 var
 I: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Index > Self.fCount - 1 then Exit;
@@ -149,12 +149,12 @@ Cur: TListNode;
   end;
 
 
-procedure TLinkedList.Push(const aValue: T);
+procedure TPGLLinkedList.Push(const aValue: T);
 var
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
-    Cur := TListNode.Create();
+    Cur := TPGLListNode.Create();
     Cur.Last := nil;
     Cur.Next := nil;
     Cur.Value := aValue;
@@ -173,7 +173,7 @@ Cur: TListNode;
   end;
 
 
-procedure TLinkedList.Push(const aValues: Array of T); overload;
+procedure TPGLLinkedList.Push(const aValues: Array of T); overload;
 var
 I: UINT32;
   begin
@@ -187,7 +187,7 @@ I: UINT32;
   end;
 
 
-procedure TLinkedList.Pop();
+procedure TPGLLinkedList.Pop();
   begin
     if Self.fCount = 0 then Exit;
 
@@ -198,7 +198,7 @@ procedure TLinkedList.Pop();
   end;
 
 
-procedure TLinkedList.Pop(const aCount: UINT32);
+procedure TPGLLinkedList.Pop(const aCount: UINT32);
 var
 I: UINT32;
   begin
@@ -209,10 +209,10 @@ I: UINT32;
   end;
 
 
-procedure TLinkedList.InsertAt(const aIndex: UINT32; const aValue: T);
+procedure TPGLLinkedList.InsertAt(const aIndex: UINT32; const aValue: T);
 var
-Cur: TListNode;
-Sel: TListNode;
+Cur: TPGLListNode;
+Sel: TPGLListNode;
 I: UINT32;
   begin
 
@@ -222,7 +222,7 @@ I: UINT32;
       Exit;
     end;
 
-    Cur := TListNode.Create();
+    Cur := TPGLListNode.Create();
     Cur.Value := aValue;
     Cur.Last := nil;
     Cur.Next := nil;
@@ -252,7 +252,7 @@ I: UINT32;
   end;
 
 
-procedure TLinkedList.InsertAt(const aIndex: UINT32; const aValues: Array of T); overload;
+procedure TPGLLinkedList.InsertAt(const aIndex: UINT32; const aValues: Array of T); overload;
 var
 I: UINT32;
 Len: UINT32;
@@ -279,9 +279,9 @@ Len: UINT32;
   end;
 
 
-procedure TLinkedList.Delete(const aIndex: UINT32); overload;
+procedure TPGLLinkedList.Delete(const aIndex: UINT32); overload;
 var
-Cur: TListNode;
+Cur: TPGLListNode;
 I: UINT32;
   begin
     // exit on index too large
@@ -316,7 +316,7 @@ I: UINT32;
   end;
 
 
-procedure TLinkedlist.Delete(const aIndex: UINT32; const aCount: UINT32); overload;
+procedure TPGLLinkedList.Delete(const aIndex: UINT32; const aCount: UINT32); overload;
 var
 I: UINT32;
   begin
@@ -337,10 +337,10 @@ I: UINT32;
   end;
 
 
-function TLinkedList.FindFirst(const aValue: T): INT32;
+function TPGLLinkedList.FindFirst(const aValue: T): INT32;
 var
 I: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Self.fCount = 0 then Exit(-1);
@@ -355,10 +355,10 @@ Cur: TListNode;
   end;
 
 
-function TLinkedList.FindLast(const aValue: T): INT32;
+function TPGLLinkedList.FindLast(const aValue: T): INT32;
 var
 I: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Self.fCount = 0 then Exit(-1);
@@ -373,11 +373,11 @@ Cur: TListNode;
   end;
 
 
-function TLinkedList.FindAll(const aValue: T): specialize TArray<UINT32>;
+function TPGLLinkedList.FindAll(const aValue: T): specialize TArray<UINT32>;
 var
 I: UINT32;
 Len: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Self.fCount = 0 then Exit(nil);
@@ -399,10 +399,10 @@ Cur: TListNode;
   end;
 
 
-procedure TLinkedList.DumpList(out Arr: specialize TArray<UINT32>);
+procedure TPGLLinkedList.DumpList(out Arr: specialize TArray<UINT32>);
 var
 I: UINT32;
-Cur: TListNode;
+Cur: TPGLListNode;
   begin
 
     if Self.fCount = 0 then begin

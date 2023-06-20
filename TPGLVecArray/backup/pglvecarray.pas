@@ -568,7 +568,7 @@ I: UINT32;
       end;
     end;
 
-    if FoundCount = 0 then Exit;
+    if FoundCount = 0 then Exit(nil);
 
     Initialize(Result);
     SetLength(Result, FoundCount);
