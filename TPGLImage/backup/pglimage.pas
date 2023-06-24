@@ -327,8 +327,9 @@ procedure TPGLImage.SetPixel(X: Cardinal; Y: Cardinal; Color: TPGLColorI);
 var
 Ptr: PByte;
 	begin
-  	//if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
-    Ptr := Self.fRowPtr[Y] + (X * 4);
+  	if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
+    //Ptr := Self.fRowPtr[Y] + (X * 4);
+    Ptr := Self.fData + (((Self.fWidth * Y) + X) * 4);
     Move(Color, Ptr^, 4);
   end;
 
@@ -462,7 +463,7 @@ OutColor: ^TPGLColorI;
 
 	      for I := Rect.Left to Rect.Right do begin
 
-	        Dist := Sqrt( IntPower(trunc(aCenter.X) - I, 2) + IntPower(trunc(aCenter.Y) - Z, 2));
+	        Dist := Sqrt( IntPower((aCenter.X) - I, 2) + IntPower((aCenter.Y) - Z, 2));
 
 	        if Dist <= aRadius then begin
             AlphaBlend(PUINT32(@aColor), PUINT32(@OutColor[Pos]));
@@ -483,7 +484,7 @@ OutColor: ^TPGLColorI;
 
       for I := Rect.Left to Rect.Right do begin
 
-        Dist := Sqrt( IntPower(trunc(aCenter.X) - I, 2) + IntPower(trunc(aCenter.Y) - Z, 2));
+        Dist := Sqrt( IntPower((aCenter.X) - I, 2) + IntPower((aCenter.Y) - Z, 2));
 
         if Dist <= aRadius then begin
         	OutColor[Pos] := aColor;
@@ -678,7 +679,7 @@ OutFile: TFileStream;
     Header.DataOffset := SizeOf(Header);
     Header.HeaderInfo.BitsPerPixel := 32;
     Header.HeaderInfo.CompressionType := 0;
-    Header.HeaderInfo.Height := -aHeight;
+    Header.HeaderInfo.Height := aHeight;
     Header.HeaderInfo.Width := aWidth;
     Header.HeaderInfo.HorzPixelPerMeter := 0;
     Header.HeaderInfo.VertPixelPerMeter := 0;

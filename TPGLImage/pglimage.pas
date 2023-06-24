@@ -327,9 +327,10 @@ procedure TPGLImage.SetPixel(X: Cardinal; Y: Cardinal; Color: TPGLColorI);
 var
 Ptr: PByte;
 	begin
-  	//if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
-    Ptr := Self.fRowPtr[Y] + (X * 4);
-    Move(Color, Ptr^, 4);
+  	if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
+    //Ptr := Self.fRowPtr[Y] + (X * 4);
+    Ptr := Self.fData + (((Self.fWidth * Y) + X) * 4);
+    Move(Color, Ptr[0], 4);
   end;
 
 function TPGLImage.GetBounds(): TPGLRectI;
@@ -678,7 +679,7 @@ OutFile: TFileStream;
     Header.DataOffset := SizeOf(Header);
     Header.HeaderInfo.BitsPerPixel := 32;
     Header.HeaderInfo.CompressionType := 0;
-    Header.HeaderInfo.Height := -aHeight;
+    Header.HeaderInfo.Height := aHeight;
     Header.HeaderInfo.Width := aWidth;
     Header.HeaderInfo.HorzPixelPerMeter := 0;
     Header.HeaderInfo.VertPixelPerMeter := 0;

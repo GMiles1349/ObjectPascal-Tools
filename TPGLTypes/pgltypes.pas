@@ -3,16 +3,23 @@ unit pgltypes;
 {$ifdef FPC}
   {$mode OBJFPC}{$H+}
   {$modeswitch ADVANCEDRECORDS}
+  {$modeswitch OUT}
+  {$macro ON}
+  {$DEFINE RELEASE_INLINE :=
+	  {$IFOPT D+}  {$ELSE} inline; {$ENDIF}
+	}
 {$else}
   {$POINTERMATH ON}
 {$endif}
 
 {$DEFINE PGL_RGB}
 
+
+
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, Math;
 
 type
 
@@ -23,11 +30,7 @@ type
 	PPGLColorI = ^TPGLColorI;
 	TPGLColorI = record
 	  private
-	    {$IFDEF PGL_RGB}
-	  		fB,fG,fR,fA: Byte;
-	  	{$ELSE}
-	      fR,fG,fB,fA: Byte;
-	  	{$ENDIF}
+	    fR,fG,fB,fA: Byte;
 
 	  	procedure SetR(value: Byte);
 	    procedure SetG(value: Byte);
@@ -69,6 +72,7 @@ type
 
 	{ TPGLColorF }
 
+  PPGLColorF = ^TPGLColorF;
 	TPGLColorF = record
 	  private
 	  	fR,fG,fB,fA: Single;
@@ -128,6 +132,7 @@ type
 
 	{ TPGLVec3 }
 
+  PPGLVec3 = ^TPGLVec3;
 	TPGLVec3 = record
 	  public
 	  	X,Y,Z: Single;
@@ -153,6 +158,11 @@ type
 				class operator Initialize(var Vec: TPGLVec4);
 				class operator := (Values: Array of Single): TPGLVec4;
 				class operator := (Values: Array of Integer): TPGLVec4;
+        class operator := (Color: TPGLColorF): TPGLVec4;
+        class operator + (aVec1, aVec2: TPGLVec4): TPGLVec4;
+        class operator - (aVec1, aVec2: TPGLVec4): TPGLVec4;
+        class operator * (aVec: TPGLVec4; aValue: Single): TPGLVec4;
+        class operator / (aVec: TPGLVec4; aValue: Single): TPGLVec4;
       {$else}
 				class operator Initialize(out Vec: TPGLVec4);
 				class operator Implicit(Values: Array of Single): TPGLVec4;
@@ -318,10 +328,16 @@ type
 
    { Colors }
 	operator := (ColorF: TPGLColorF): TPGLColorI;
+  operator := (Color: TPGLVec4): TPGLColorI;
   operator =  (ColorI: TPGLColorI; ColorF: TPGLColorF): Boolean;
+  operator + (Color1, Color2: TPGLColorI): TPGLVec4;
+  operator - (Color1, Color2: TPGLColorI): TPGLVec4;
 
   operator := (ColorI: TPGLColorI): TPGLColorF;
+  operator := (Color: TPGLVec4): TPGLColorF;
   operator =  (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
+  operator + (Color1, Color2: TPGLColorF): TPGLVec4;
+  operator - (Color1, Color2: TPGLColorF): TPGLVec4;
 
    { Vectors }
   operator := (aVec3: TPGLVec3): TPGLVec2;
@@ -343,38 +359,127 @@ type
 {$ENDREGION}
 
 	// clamping
-	function ClampI(value: Integer): Byte; overload; register;
-	function ClampF(value: Single): Single; overload; register;
+	function ClampI(const value: Integer): Byte; overload;
+	function ClampF(const value: Single): Single; overload;
 
-	procedure ClampVarI(var value: Integer); register;
-	procedure ClampVarF(var value: Single); register;
+	procedure ClampVarI(var value: Integer);
+	procedure ClampVarF(var value: Single);
 
 	// colors
-	function ColorI(aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI; register;
-	function ColorF(aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF; register;
-	function MixF(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF; overload;
-	function MixI(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
-	function MixP(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
-	procedure AlphaBlend(const srccolor, dstcolor: Pointer); register; inline;
+	function ColorI(const aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI;
+	function ColorF(const aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF;
+	function MixF(const aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF; overload;
+	function MixI(const aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
+	function MixP(const aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI; overload;
+	procedure AlphaBlend(const srccolor, dstcolor: Pointer); RELEASE_INLINE
 
 	// rects
-	function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI; register;
-	function RectIC(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI; register;
-	function RectIWH(aLeft, aTop, aWidth, aHeight: Integer): TPGLRectI; register;
-	function RectF(aLeft, aTop, aRight, aBottom: Single): TPGLRectF; register;
-	function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF; register;
-	function RectFWH(aLeft, aTop, aWidth, aHeight: Single): TPGLRectF; register;
+	function RectI(const aLeft, aTop, aRight, aBottom: Integer): TPGLRectI;
+	function RectIC(const aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
+	function RectIWH(const aLeft, aTop, aWidth, aHeight: Integer): TPGLRectI;
+	function RectF(const aLeft, aTop, aRight, aBottom: Single): TPGLRectF;
+	function RectFC(const aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
+	function RectFWH(const aLeft, aTop, aWidth, aHeight: Single): TPGLRectF;
 
   // vectors
-  function Vec2(aX, aY: Single): TPGLVec2;
-  function Vec3(aX, aY, aZ: Single): TPGLVec3;
-  function Vec4(aX, aY, aZ, aW: Single): TPGLVec4;
+  function Vec2(const aX, aY: Single): TPGLVec2;
+  function Vec3(const aX, aY, aZ: Single): TPGLVec3;
+  function Vec4(const aX, aY, aZ, aW: Single): TPGLVec4;
 
+  // math
+  function Distance(const Vec1, Vec2: TPGLVec3): Single; RELEASE_INLINE
+  function Angle(const Vec1, Vec2: TPGLVec2): Single; RELEASE_INLINE
+  function AnglePoint(const aStartVec: TPGLVec2; const aAngle: Single; const aDist: Single): TPGLVec2; RELEASE_INLINE
+  function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
+  function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
+  function Mins(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
+  function Mins(const Arr: Array of TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
+  function Maxes(const aVec1, aVec2: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
+  function Maxes(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
+  function Maxes(const Arr: Array of TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
 
 var
 	RedBlueComps: UINT32;
   GreenComp: UINT32;
   BlendDstPtr, BlendSrcPtr: PUINT32;
+
+
+ const
+   // colors Integer
+  pgl_empty: TPGLColorI =         (fR: 0; fG: 0; fB: 0; fA: 0);
+  pgl_white: TPGLColorI =         (fR: 255; fG: 255; fB: 255; fA: 255);
+  pgl_black: TPGLColorI =         (fR: 0; fG: 0; fB: 0; fA: 255);
+
+  pgl_grey: TPGLColorI =          (fR: 128; fG: 128; fB: 128; fA: 255);
+  pgl_light_grey: TPGLColorI =    (fR: 75; fG: 75; fB: 75; fA: 255);
+  pgl_dark_grey: TPGLColorI =     (fR: 225; fG: 225; fB: 225; fA: 255);
+
+  pgl_red: TPGLColorI =           (fR: 255; fG: 0; fB: 0; fA: 255);
+  pgl_ligh_red: TPGLColorI =      (fR: 255; fG: 125; fB: 128; fA: 255);
+  pgl_dark_red: TPGLColorI =      (fR: 128; fG: 0; fB: 0; fA: 255);
+
+  pgl_yellow: TPGLColorI =        (fR: 255; fG: 255; fB: 0; fA: 255);
+  pgl_light_yellow: TPGLColorI =  (fR: 255; fG: 255; fB: 128; fA: 255);
+  pgl_dark_yellow: TPGLColorI =   (fR: 128; fG: 128; fB: 0; fA: 255);
+
+  pgl_blue: TPGLColorI =          (fR: 0; fG: 0; fB: 255; fA: 255);
+  pgl_light_blue: TPGLColorI =    (fR: 128; fG: 128; fB: 255; fA: 255);
+  pgl_dark_blue: TPGLColorI =     (fR: 0; fG: 0; fB: 128; fA: 255);
+
+  pgl_green: TPGLColorI =         (fR: 0; fG: 255; fB: 0; fA: 255);
+  pgl_light_green: TPGLColorI =   (fR: 128; fG: 255; fB: 128; fA: 255);
+  pgl_dark_green: TPGLColorI =    (fR: 0; fG: 128; fB: 0; fA: 255);
+
+  pgl_orange: TPGLColorI =        (fR: 255; fG: 128; fB: 0; fA: 255);
+  pgl_light_orange: TPGLColorI =  (fR: 255; fG: 190; fB: 128; fA: 255);
+  pgl_dark_orange: TPGLColorI =   (fR: 128; fG: 64; fB: 0; fA: 255);
+
+  pgl_brown: TPGLColorI =         (fR: 128; fG: 64; fB: 0; fA: 255);
+  pgl_light_brown: TPGLColorI =   (fR: 180; fG: 90; fB: 0; fA: 255);
+  pgl_dark_brown: TPGLColorI =    (fR: 96; fG: 48; fB: 0; fA: 255);
+
+  pgl_purple: TPGLColorI =        (fR: 128; fG: 0; fB: 128; fA: 255);
+  pgl_cyan: TPGLColorI =          (fR: 0; fG: 255; fB: 255; fA: 255);
+  pgl_magenta: TPGLColorI =       (fR: 255; fG: 0; fB: 255; fA: 255);
+  pgl_pink: TPGLColorI =          (fR: 255; fG: 196; fB: 196; fA: 255);
+
+  // colors float
+  pgl_empty_f: TPGLColorF =         (fR: 0 / 255; fG: 0 / 255; fB: 0 / 255; fA: 0 / 255);
+  pgl_white_f: TPGLColorF =         (fR: 255 / 255; fG: 255 / 255; fB: 255 / 255; fA: 255 / 255);
+  pgl_black_f: TPGLColorF =         (fR: 0 / 255; fG: 0 / 255; fB: 0 / 255; fA: 255 / 255);
+
+  pgl_grey_f: TPGLColorF =          (fR: 128 / 255;  fG: 128 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_light_grey_f: TPGLColorF =    (fR: 75 / 255;  fG: 75 / 255;  fB: 75 / 255;  fA: 255 / 255);
+  pgl_dark_grey_f: TPGLColorF =     (fR: 225 / 255;  fG: 225 / 255;  fB: 225 / 255;  fA: 255 / 255);
+
+  pgl_red_f: TPGLColorF =           (fR: 255 / 255;  fG: 0 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_ligh_red_f: TPGLColorF =      (fR: 255 / 255;  fG: 125 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_dark_red_f: TPGLColorF =      (fR: 128 / 255;  fG: 0 / 255;  fB: 0 / 255;  fA: 255 / 255);
+
+  pgl_yellow_f: TPGLColorF =        (fR: 255 / 255;  fG: 255 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_light_yellow_f: TPGLColorF =  (fR: 255 / 255;  fG: 255 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_dark_yellow_f: TPGLColorF =   (fR: 128 / 255;  fG: 128 / 255;  fB: 0 / 255;  fA: 255 / 255);
+
+  pgl_blue_f: TPGLColorF =          (fR: 0 / 255;  fG: 0 / 255;  fB: 255 / 255;  fA: 255 / 255);
+  pgl_light_blue_f: TPGLColorF =    (fR: 128 / 255;  fG: 128 / 255;  fB: 255 / 255;  fA: 255 / 255);
+  pgl_dark_blue_f: TPGLColorF =     (fR: 0 / 255;  fG: 0 / 255;  fB: 128 / 255;  fA: 255 / 255);
+
+  pgl_green_f: TPGLColorF =         (fR: 0 / 255;  fG: 255 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_light_green_f: TPGLColorF =   (fR: 128 / 255;  fG: 255 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_dark_green_f: TPGLColorF =    (fR: 0 / 255;  fG: 128 / 255;  fB: 0 / 255;  fA: 255 / 255);
+
+  pgl_orange_f: TPGLColorF =        (fR: 255 / 255;  fG: 128 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_light_orange_f: TPGLColorF =  (fR: 255 / 255;  fG: 190 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_dark_orange_f: TPGLColorF =   (fR: 128 / 255;  fG: 64 / 255;  fB: 0 / 255;  fA: 255 / 255);
+
+  pgl_brown_f: TPGLColorF =         (fR: 128 / 255;  fG: 64 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_light_brown_f: TPGLColorF =   (fR: 180 / 255;  fG: 90 / 255;  fB: 0 / 255;  fA: 255 / 255);
+  pgl_dark_brown_f: TPGLColorF =    (fR: 96 / 255;  fG: 48 / 255;  fB: 0 / 255;  fA: 255 / 255);
+
+  pgl_purple_f: TPGLColorF =        (fR: 128 / 255;  fG: 0 / 255;  fB: 128 / 255;  fA: 255 / 255);
+  pgl_cyan_f: TPGLColorF =          (fR: 0 / 255;  fG: 255 / 255;  fB: 255 / 255;  fA: 255 / 255);
+  pgl_magenta_f: TPGLColorF =       (fR: 255 / 255;  fG: 0 / 255;  fB: 255 / 255;  fA: 255 / 255);
+  pgl_pink_f: TPGLColorF =          (fR: 255 / 255;  fG: 196 / 255;  fB: 196 / 255;  fA: 255 / 255);
 
 implementation
 
@@ -925,6 +1030,48 @@ Ptr: PSingle;
     end;
   end;
 
+
+class operator TPGLVec4.:= (Color: TPGLColorF): TPGLVec4;
+  begin
+    Result.X := Color.R;
+    Result.Y := Color.G;
+    Result.Z := Color.B;
+    Result.W := Color.A;
+  end;
+
+
+class operator TPGLVec4.+ (aVec1, aVec2: TPGLVec4): TPGLVec4;
+  begin
+    Result.X := aVec1.X + aVec2.X;
+    Result.Y := aVec1.Y + aVec2.Y;
+    Result.Z := aVec1.Z + aVec2.Z;
+    Result.W := aVec1.W + aVec2.W;
+  end;
+
+class operator TPGLVec4.- (aVec1, aVec2: TPGLVec4): TPGLVec4;
+  begin
+    Result.X := aVec1.X - aVec2.X;
+    Result.Y := aVec1.Y - aVec2.Y;
+    Result.Z := aVec1.Z - aVec2.Z;
+    Result.W := aVec1.W - aVec2.W;
+  end;
+
+class operator TPGLVec4.* (aVec: TPGLVec4; aValue: Single): TPGLVec4;
+  begin
+    Result.X := aVec.X * aValue;
+    Result.Y := aVec.Y * aValue;
+    Result.Z := aVec.Z * aValue;
+    Result.W := aVec.W * aValue;
+  end;
+
+class operator TPGLVec4./ (aVec: TPGLVec4; aValue: Single): TPGLVec4;
+  begin
+    Result.X := aVec.X / aValue;
+    Result.Y := aVec.Y / aValue;
+    Result.Z := aVec.Z / aValue;
+    Result.W := aVec.W / aValue;
+  end;
+
 (*///////////////////////////////////////////////////////////////////////////////////////)
 (----------------------------------------------------------------------------------------)
                                       TPGLRectI
@@ -1426,6 +1573,54 @@ class operator TPGLColorIHelper.Equal(ColorI: TPGLColorI; ColorF: TPGLColorF): B
     and (ColorI.B = trunc(ColorF.B * 255)) and (ColorI.A = trunc(ColorF.A * 255));
   end;
 
+operator := (Color: TPGLVec4): TPGLColorI;
+  begin
+    Result.R := trunc(Color.X * 255);
+    Result.G := trunc(Color.Y * 255);
+    Result.B := trunc(Color.Z * 255);
+    Result.A := trunc(Color.W * 255);
+  end;
+
+operator := (Color: TPGLVec4): TPGLColorF;
+  begin
+    Result.R := (Color.X);
+    Result.G := (Color.Y);
+    Result.B := (Color.Z);
+    Result.A := (Color.W);
+  end;
+
+operator + (Color1, Color2: TPGLColorI): TPGLVec4;
+  begin
+    Result.X := (Color1.R + Color2.R) / 255;
+    Result.Y := (Color1.G + Color2.G) / 255;
+    Result.Z := (Color1.B + Color2.B) / 255;
+    Result.W := (Color1.A + Color2.A) / 255;
+  end;
+
+operator - (Color1, Color2: TPGLColorI): TPGLVec4;
+  begin
+    Result.X := (Color1.R - Color2.R) / 255;
+    Result.Y := (Color1.G - Color2.G) / 255;
+    Result.Z := (Color1.B - Color2.B) / 255;
+    Result.W := (Color1.A - Color2.A) / 255;
+  end;
+
+operator + (Color1, Color2: TPGLColorF): TPGLVec4;
+  begin
+    Result.X := (Color1.R + Color2.R);
+    Result.Y := (Color1.G + Color2.G);
+    Result.Z := (Color1.B + Color2.B);
+    Result.W := (Color1.A + Color2.A);
+  end;
+
+operator - (Color1, Color2: TPGLColorF): TPGLVec4;
+  begin
+    Result.X := (Color1.R - Color2.R);
+    Result.Y := (Color1.G - Color2.G);
+    Result.Z := (Color1.B - Color2.B);
+    Result.W := (Color1.A - Color2.A);
+  end;
+
 {$ifdef FPC}
 operator = (ColorF: TPGLColorF; ColorI: TPGLColorI): Boolean;
 {$else}
@@ -1522,14 +1717,14 @@ class operator TPGLRectFHelper.Implicit(aRect: TPGLRectI): TPGLRectF;
 (----------------------------------------------------------------------------------------)
 (///////////////////////////////////////////////////////////////////////////////////////*)
 
-function ClampI(value: Integer): Byte;
+function ClampI(const value: Integer): Byte;
 	begin
   	Result := value;
     if value > 255 then Exit(255);
     if value < 0 then Exit(0);
   end;
 
-function ClampF(value: Single): Single;
+function ClampF(const value: Single): Single;
 	begin
   	Result := value;
     if value > 1 then Exit(1);
@@ -1548,7 +1743,7 @@ procedure ClampVarF(var value: Single);
     if value < 0 then begin value := 0; exit; end;
   end;
 
-function ColorI(aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI;
+function ColorI(const aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI;
 	begin
   	Result.fR := aRed;
     Result.fG := aGreen;
@@ -1556,7 +1751,7 @@ function ColorI(aRed, aGreen, aBlue: Byte; aAlpha: Byte = 255): TPGLColorI;
     Result.fA := aAlpha;
   end;
 
-function ColorF(aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF;
+function ColorF(const aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF;
 	begin
   	Result.fR := ClampF(aRed);
     Result.fG := ClampF(aGreen);
@@ -1564,7 +1759,7 @@ function ColorF(aRed, aGreen, aBlue: Single; aAlpha: Single = 1.0): TPGLColorF;
     Result.fA := ClampF(aAlpha)
   end;
 
-function MixF(aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF;
+function MixF(const aDestColor, aSrcColor: TPGLColorF; aSrcFactor: Single): TPGLColorF;
 var
 SF, DF: Single;
 	begin
@@ -1576,7 +1771,7 @@ SF, DF: Single;
     Result.fA := 1;
   end;
 
-function MixI(aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI;
+function MixI(const aDestColor, aSrcColor: TPGLColorI; aSrcFactor: Byte): TPGLColorI;
 var
 SF, DF: Single;
 	begin
@@ -1588,7 +1783,7 @@ SF, DF: Single;
     Result.fA := 255;
   end;
 
-function MixP(aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI;
+function MixP(const aDestColor, aSrcColor: PPGLColorI; aSrcFactor: Byte): TPGLColorI;
 var
 SF, DF: Single;
 	begin
@@ -1615,12 +1810,12 @@ Alpha: Byte;
 		BlendDstPtr^ := $ff000000 or (RedBlueComps and $ff00ff) or (GreenComp and $ff00);
 	end;
 
-function RectI(aLeft, aTop, aRight, aBottom: Integer): TPGLRectI;
+function RectI(const aLeft, aTop, aRight, aBottom: Integer): TPGLRectI;
 	begin
   	Result := TPGLRectI.Create(aLeft, aTop, aRight, aBottom);
   end;
 
-function RectIC(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
+function RectIC(const aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
 	begin
   	Result.fX := trunc(aCenter.X);
     Result.fY := trunc(aCenter.Y);
@@ -1632,17 +1827,17 @@ function RectIC(aCenter: TPGLVec2; aWidth, aHeight: Integer): TPGLRectI;
     Result.fBottom := Result.fTop + (aHeight);
   end;
 
-function RectIWH(aLeft, aTop, aWidth, aHeight: Integer): TPGLRectI;
+function RectIWH(const aLeft, aTop, aWidth, aHeight: Integer): TPGLRectI;
 	begin
   	Result := TPGLRectI.Create(aLeft, aTop, aLeft + (aWidth - 1), aTop + (aHeight - 1));
   end;
 
-function RectF(aLeft, aTop, aRight, aBottom: Single): TPGLRectF;
+function RectF(const aLeft, aTop, aRight, aBottom: Single): TPGLRectF;
 	begin
   	Result := TPGLRectF.Create(aLeft, aTop, aRight, aBottom);
   end;
 
-function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
+function RectFC(const aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
 	begin
   	Result.fX := (aCenter.X);
     Result.fY := (aCenter.Y);
@@ -1654,30 +1849,174 @@ function RectFC(aCenter: TPGLVec2; aWidth, aHeight: Single): TPGLRectF;
     Result.fBottom := Result.fTop + (aHeight);
   end;
 
-function RectFWH(aLeft, aTop, aWidth, aHeight: Single): TPGLRectF;
+function RectFWH(const aLeft, aTop, aWidth, aHeight: Single): TPGLRectF;
 	begin
   	Result := TPGLRectF.Create(aLeft, aTop, aLeft + (aWidth - 1), aTop + (aHeight - 1))
   end;
 
-function Vec2(aX, aY: Single): TPGLVec2;
+function Vec2(const aX, aY: Single): TPGLVec2;
   begin
     Result.X := aX;
     Result.Y := aY;
   end;
 
-function Vec3(aX, aY, aZ: Single): TPGLVec3;
+function Vec3(const aX, aY, aZ: Single): TPGLVec3;
   begin
     Result.X := aX;
     Result.Y := aY;
     Result.Z := aZ;
   end;
 
-function Vec4(aX, aY, aZ, aW: Single): TPGLVec4;
+function Vec4(const aX, aY, aZ, aW: Single): TPGLVec4;
   begin
     Result.X := aX;
     Result.Y := aY;
     Result.Z := aZ;
     Result.W := aW;
   end;
+
+function Distance(const Vec1, Vec2: TPGLVec3): Single; RELEASE_INLINE
+  begin
+    Exit( Sqrt( IntPower(Vec2.X - Vec1.X, 2) + IntPower(Vec2.Y - Vec1.Y, 2) + IntPower(Vec2.Z - Vec1.Z, 2) ) );
+  end;
+
+function Angle(const Vec1, Vec2: TPGLVec2): Single; RELEASE_INLINE
+  begin
+    Exit( ArcTan2(Vec2.Y - Vec1.Y, Vec2.X - Vec1.X) );
+  end;
+
+function AnglePoint(const aStartVec: TPGLVec2; const aAngle: Single; const aDist: Single): TPGLVec2; RELEASE_INLINE
+  begin
+    Result.X := aStartVec.X + (aDist * Cos(aAngle));
+    Result.Y := aStartVec.Y + (aDist * Sin(aAngle));
+  end;
+
+function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
+  begin
+     Exit( (P1.X - P2.X) * (TestPoint.Y - P1.Y) - (P1.Y - P2.Y) * (TestPoint.X - P1.X) );
+  end;
+
+function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3;
+  begin
+    // Min X
+    if aVec1.x < aVec2.x then Result.x := aVec1.x else Result.x := aVec2.x;
+    // Min Y
+    if aVec1.y < aVec2.y then Result.y := aVec1.y else Result.y := aVec2.y;
+    // Min Z
+    if aVec1.x < aVec2.z then Result.z := aVec1.z else Result.z := aVec2.z;
+  end;
+
+function Mins(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3; 
+  begin
+    // Min X
+    Result.X := aVec1.X;
+    if aVec2.X < aVec1.X then begin
+      if aVec2.X < aVec3.X then begin
+        Result.X := aVec2.X;
+      end else begin
+        Result.X := aVec3.X;
+      end;
+    end;
+
+    // Min Y
+    Result.Y := aVec1.Y;
+    if aVec2.Y < aVec1.Y then begin
+      if aVec2.Y < aVec3.Y then begin
+        Result.Y := aVec2.Y;
+      end else begin
+        Result.Y := aVec3.Y;
+      end;
+    end;
+
+    // Min Z
+    Result.Z := aVec1.Z;
+    if aVec2.Z < aVec1.Z then begin
+      if aVec2.Z < aVec3.Z then begin
+        Result.Z := aVec2.Z;
+      end else begin
+        Result.Z := aVec3.Z;
+      end;
+    end;
+  end;
+
+function Mins(const Arr: Array of TPGLVec3): TPGLVec3;
+var
+I: INT32;
+  begin
+
+    if Length(Arr) = 0 then Exit(Vec3(0,0,0));
+    if Length(Arr) = 1 then Exit(Arr[0]);
+
+    // Min X
+    Result := Arr[0];
+    for I := 1 to High(Arr) do begin
+      if Arr[I].X < Result.X then Result.X := Arr[I].X;
+      if Arr[I].Y < Result.Y then Result.Y := Arr[I].Y;
+      if Arr[I].Z < Result.Z then Result.Z := Arr[I].Z;
+    end;
+
+  end;
+
+function Maxes(const aVec1, aVec2: TPGLVec3): TPGLVec3;
+  begin
+    // Min X
+    if aVec1.x > aVec2.x then Result.x := aVec1.x else Result.x := aVec2.x;
+    // Min Y
+    if aVec1.y > aVec2.y then Result.y := aVec1.y else Result.y := aVec2.y;
+    // Min Z
+    if aVec1.x > aVec2.z then Result.z := aVec1.z else Result.z := aVec2.z;
+  end;
+
+function Maxes(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3;
+  begin
+    // Min X
+    Result.X := aVec1.X;
+    if (aVec2.X > aVec1.X) or (aVec3.X > aVec1.X) then begin
+      if aVec2.X > aVec3.X then begin
+        Result.X := aVec2.X;
+      end else begin
+        Result.X := aVec3.X;
+      end;
+    end;
+
+    // Min Y
+    Result.Y := aVec1.Y;
+    if (aVec2.Y > aVec1.Y) or (aVec3.Y > aVec1.Y) then begin
+      if aVec2.Y > aVec3.Y then begin
+        Result.Y := aVec2.Y;
+      end else begin
+        Result.Y := aVec3.Y;
+      end;
+    end;
+
+    // Min Z
+    Result.Z := aVec1.Z;
+    if (aVec2.Z > aVec1.Z) or (aVec3.Z > aVec1.Z) then begin
+      if aVec2.Z > aVec3.Z then begin
+        Result.Z := aVec2.Z;
+      end else begin
+        Result.Z := aVec3.Z;
+      end;
+    end;
+  end;
+
+function Maxes(const Arr: Array of TPGLVec3): TPGLVec3;
+var
+I: INT32;
+  begin
+
+    if Length(Arr) = 0 then Exit(Vec3(0,0,0));
+    if Length(Arr) = 1 then Exit(Arr[0]);
+
+    // Min X
+    Result := Arr[0];
+    for I := 1 to High(Arr) do begin
+      if Arr[I].X > Result.X then Result.X := Arr[I].X;
+      if Arr[I].Y > Result.Y then Result.Y := Arr[I].Y;
+      if Arr[I].Z > Result.Z then Result.Z := Arr[I].Z;
+    end;
+
+  end;
+
 end.
 
