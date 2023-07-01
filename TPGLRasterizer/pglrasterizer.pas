@@ -279,9 +279,17 @@ T,X,Y: UINT32;
 CurTri: PPGlTriangle;
 MinVals, MaxVals: TPGLVec3;
 MinX, MinY, MaxX, MaxY: INT32;
-Edge1, Edge2, Edge3: Single;
-Edge1XStep, Edge2XStep, Edge3XStep, Edge1YStep, Edge2YStep, Edge3YStep: Single;
-Area: Single;
+Area, Edge1, Edge2, Edge3: Single;
+OutColor: TPGLColorI;
+Color1, Color2, Color3: TPGLColorf;
+XStep, YStep: Single;
+Tile: Array of Array of TPGLRectI;
+TilesX, TilesY: UINT32;
+TileWidth: UINT32;
+MaxWidth, MaxHeight: UINT32;
+RemX, RemY: UINT32;
+CurX, CurY: INT32;
+SW, SH: INT32;
   begin
 
     if Self.fTriangleCount = 0 then Exit;
@@ -295,33 +303,67 @@ Area: Single;
         MaxX := trunc(MaxVals.X);
         MaxY := trunc(MaxVals.Y);
 
-        Area := 1;
-        Edge1 := EdgeTest(CurTri.P[0]^, CurTri.P[1]^, Vec3(MinX,MinY,0)) / Area;
-        Edge2 := EdgeTest(CurTri.P[1]^, CurTri.P[2]^, Vec3(MinX,MinY,0)) / Area;
-        Edge3 := EdgeTest(CurTri.P[2]^, CurTri.P[0]^, Vec3(MinX,MinY,0)) / Area;
+        Area := EdgeTest(CurTri.P[0]^, CurTri.P[1]^, CurTri.P[2]^);
 
-        Edge1XStep := (CurTri.P[1].Y - CurTri.P[0].Y) / Area;
-        Edge2XStep := (CurTri.P[2].Y - CurTri.P[1].Y) / Area;
-        Edge3XStep := (CurTri.P[0].Y - CurTri.P[2].Y) / Area;
-        Edge1YStep := (CurTri.P[1].X - CurTri.P[0].X) / Area;
-        Edge2YStep := (CurTri.P[2].X - CurTri.P[1].X) / Area;
-        Edge3YStep := (CurTri.P[0].X - CurTri.P[2].X) / Area;
+        Color1 := CurTri.Vertex[0].Color;
+        Color2 := CurTri.Vertex[1].Color;
+        Color3 := CurTri.Vertex[2].Color;
 
-        for Y := MinY to MaxY do begin
-          for X := MinX to MaxX do begin
-            if (Edge1 >= 0) and (Edge2 >= 0) and (Edge3 >= 0) then begin
-              Self.fTarget.Pixle[X,Y] := ColorI(255,0,0,255);
+        TileWidth := 8;
+
+        MaxWidth := MaxX - Minx;
+        MaxHeight := MaxY - MinY;
+
+        TilesX := trunc(MaxWidth / TileWidth);
+        TilesY := trunc(MaxHeight / TileWidth);
+        RemX := MaxWidth mod TileWidth;
+        RemY := MaxHeight mod TileWidth;
+
+        if RemX <> 0 then TilesX := TilesX + 1;
+        if Remy <> 0 then TilesY := TilesY + 1;
+
+        initialize(Tile);
+        SetLength(Tile, TilesX, TilesY);
+
+        CurX := MinX;
+        CurY := MinY;
+
+        for Y := 0 to TilesY - 1 do begin
+          curX := MinX;
+          for X := 0 to TilesX - 1 do begin
+
+            SW := TileWidth;
+            SH := TileWidth;
+
+            if X = TilesX - 1 then begin
+              SW := RemX;
             end;
-            Edge1 := Edge1 + Edge1XStep;
-            Edge2 := Edge2 + Edge2XStep;
-            Edge3 := Edge3 + Edge3XStep;
+
+            if Y = TilesY - 1 then begin
+              SH := RemY;
+            end;
+
+            Tile[X,Y] := RectIWH(CurX, CurY, SW, SH);
+
+            CurX := CurX + TileWidth;
+
           end;
 
-          Edge1 := Edge1 + Edge1YStep;
-          Edge2 := Edge2 + Edge2YStep;
-          Edge3 := Edge3 + Edge3YStep;
+          CurY := CurY + TileWidth;
         end;
 
+
+        for Y := 0 to TilesY - 1 do begin
+          for X := 0 to TilesX - 1 do begin
+
+            if InTriangle(CurTri.P[0]^, CurTri.P[1]^, CurTri.P[2]^, Tile[X,Y].TopLeft) = False then Continue;
+            if InTriangle(CurTri.P[0]^, CurTri.P[1]^, CurTri.P[2]^, Tile[X,Y].TopRight) = False then Continue;
+            if InTriangle(CurTri.P[0]^, CurTri.P[1]^, CurTri.P[2]^, Tile[X,Y].BottomLeft) = False then Continue;
+            if InTriangle(CurTri.P[0]^, CurTri.P[1]^, CurTri.P[2]^, Tile[X,Y].BottomRight) = False then Continue;
+
+            Self.fTarget.DrawRectangle(Tile[X,Y], pgl_blue);
+          end;
+        end;
 
     end;
 

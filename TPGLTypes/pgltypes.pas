@@ -390,6 +390,7 @@ type
   function Distance(const Vec1, Vec2: TPGLVec3): Single; RELEASE_INLINE
   function Angle(const Vec1, Vec2: TPGLVec2): Single; RELEASE_INLINE
   function AnglePoint(const aStartVec: TPGLVec2; const aAngle: Single; const aDist: Single): TPGLVec2; RELEASE_INLINE
+  function InTriangle(const P1, P2, P3, TestPoint: TPGLVec2): Boolean; RELEASE_INLINE
   function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
   function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
   function Mins(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
@@ -1894,6 +1895,11 @@ function AnglePoint(const aStartVec: TPGLVec2; const aAngle: Single; const aDist
 function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
   begin
      Exit( (P1.X - P2.X) * (TestPoint.Y - P1.Y) - (P1.Y - P2.Y) * (TestPoint.X - P1.X) );
+  end;
+
+function InTriangle(const P1, P2, P3, TestPoint: TPGLVec2): Boolean; RELEASE_INLINE
+  begin
+    Exit ( (EdgeTest(P1,P2,TestPoint) >= 0) and (EdgeTest(P2, P3, TestPoint) >= 0) and (EdgeTest(P3, P1, TestPoint) >= 0) );
   end;
 
 function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3;

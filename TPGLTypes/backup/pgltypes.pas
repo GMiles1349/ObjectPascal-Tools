@@ -390,6 +390,7 @@ type
   function Distance(const Vec1, Vec2: TPGLVec3): Single; RELEASE_INLINE
   function Angle(const Vec1, Vec2: TPGLVec2): Single; RELEASE_INLINE
   function AnglePoint(const aStartVec: TPGLVec2; const aAngle: Single; const aDist: Single): TPGLVec2; RELEASE_INLINE
+  function InTriangle(const P1, P2, P3, TestPoint: TPGLVec2): Boolean; RELEASE_INLINE
   function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
   function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
   function Mins(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3; overload; RELEASE_INLINE
@@ -1896,6 +1897,11 @@ function EdgeTest(const P1, P2, TestPoint: TPGLVec2): Single; RELEASE_INLINE
      Exit( (P1.X - P2.X) * (TestPoint.Y - P1.Y) - (P1.Y - P2.Y) * (TestPoint.X - P1.X) );
   end;
 
+function InTriangle(const P1, P2, P3, TestPoint: TPGLVec2): Boolean; RELEASE_INLINE
+  begin
+    Exit ( (EdgeTest(P1,P2,TestPoint) > 0) and (EdgeTest(P2, P3, TestPoint) > 0) and (EdgeTest(P3, P1, TestPoint) > 0) );
+  end;
+
 function Mins(const aVec1, aVec2: TPGLVec3): TPGLVec3;
   begin
     // Min X
@@ -1971,7 +1977,7 @@ function Maxes(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3;
   begin
     // Min X
     Result.X := aVec1.X;
-    if aVec2.X > aVec1.X then begin
+    if (aVec2.X > aVec1.X) or (aVec3.X > aVec1.X) then begin
       if aVec2.X > aVec3.X then begin
         Result.X := aVec2.X;
       end else begin
@@ -1981,7 +1987,7 @@ function Maxes(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3;
 
     // Min Y
     Result.Y := aVec1.Y;
-    if aVec2.Y > aVec1.Y then begin
+    if (aVec2.Y > aVec1.Y) or (aVec3.Y > aVec1.Y) then begin
       if aVec2.Y > aVec3.Y then begin
         Result.Y := aVec2.Y;
       end else begin
@@ -1991,7 +1997,7 @@ function Maxes(const aVec1, aVec2, aVec3: TPGLVec3): TPGLVec3;
 
     // Min Z
     Result.Z := aVec1.Z;
-    if aVec2.Z > aVec1.Z then begin
+    if (aVec2.Z > aVec1.Z) or (aVec3.Z > aVec1.Z) then begin
       if aVec2.Z > aVec3.Z then begin
         Result.Z := aVec2.Z;
       end else begin

@@ -327,10 +327,10 @@ procedure TPGLImage.SetPixel(X: Cardinal; Y: Cardinal; Color: TPGLColorI);
 var
 Ptr: PByte;
 	begin
-  	if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
+  	//if (X > Self.fWidth - 1) or (Y > Self.fHeight - 1) then Exit;
     //Ptr := Self.fRowPtr[Y] + (X * 4);
     Ptr := Self.fData + (((Self.fWidth * Y) + X) * 4);
-    Move(Color, Ptr^, 4);
+    Move(Color, Ptr[0], 4);
   end;
 
 function TPGLImage.GetBounds(): TPGLRectI;

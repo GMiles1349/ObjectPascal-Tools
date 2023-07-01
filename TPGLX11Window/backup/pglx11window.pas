@@ -252,6 +252,8 @@ GLMin, GLMax: Integer;
     Self.fIM := XOpenIM(Self.fDisplay, nil, nil, nil);
     Self.fIC := XCreateIC(Self.fIM, [XNInputStyle, XIMPreeditNothing or XIMStatusNothing, nil]);
 
+    glxQueryVersion(Self.fDisplay, GLMax, GLMin);
+
   end;
 
 
